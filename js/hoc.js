@@ -1,6 +1,6 @@
 /* ================= Học từ vựng theo bài: thẻ từ, flashcard, game, luyện nghe ================= */
 (function(){
-const A=window.App, {UNITS,ALLSENTS,S,save,$,$$,box,unit,esc,pyHTML,pyPlain,toneOf,retone,shuffle,sample,rand,distract,mastery,ICON,speak}=A;
+const A=window.App, {UNITS,ALLSENTS,S,save,$,$$,box,unit,esc,pyHTML,pyPlain,toneOf,retone,shuffle,sample,rand,distract,mastery,ICON,speak,pic}=A;
 let root, HM;
 
 A.register('hoc',r=>{root=r; build();});
@@ -42,7 +42,7 @@ const toTab=t=>()=>{S.tab=t;save();A.cleanup();if('speechSynthesis' in window)sp
 function renderVocab(){
   const u=unit();
   HM.innerHTML=`<div class="legend"><span>Màu thanh điệu:</span><b class="t1">ā thanh 1</b><b class="t2">á thanh 2</b><b class="t3">ǎ thanh 3</b><b class="t4">à thanh 4</b><b class="t0">a thanh nhẹ</b><span>· Chạm vào thẻ để nghe</span></div>
-  <div class="wgrid">${u.words.map((w,i)=>`<button class="wcard" data-i="${i}"><span class="hz">${w.h}</span>${pyHTML(w.p)}<span class="mn">${esc(w.m)}</span>
+  <div class="wgrid">${u.words.map((w,i)=>`<button class="wcard" data-i="${i}">${pic(w.h,40)}<span class="hz">${w.h}</span>${pyHTML(w.p)}<span class="mn">${esc(w.m)}</span>
     <span class="dots" title="Mức ghi nhớ">${[1,2,3,4].map(k=>`<i class="${box(w)>=k?'f':''}"></i>`).join('')}</span></button>`).join('')}</div>
   <div class="sec"><h3>Câu mẫu</h3><div class="slist">${u.sents.map((s,i)=>`<div class="srow"><button class="say" data-s="${i}" aria-label="Nghe câu">${ICON.spk}</button>
     <span class="hz">${s.h}</span><span class="sp">${esc(s.p)}</span><span class="sm">${esc(s.m)}</span></div>`).join('')}</div></div>
@@ -61,11 +61,12 @@ function startFlash(){
   function face(){
     if(!q.length)return finish();
     const {w}=q[0]; flipped=false;
-    const hv=S.fmode==='hv';
-    const front=hv?`<div class="big">${w.h}</div>`:`<div class="vbig">${esc(w.m)}</div>`;
-    const back=`<div class="big" style="font-size:58px">${w.h}</div>${pyHTML(w.p)}<div class="vbig" style="font-size:20px;font-weight:500">${esc(w.m)}</div>`;
+    const hv=S.fmode==='hv', imgF=S.imgFront!==false;
+    const front=(imgF?pic(w.h,76):'')+(hv?`<div class="big">${w.h}</div>`:`<div class="vbig">${esc(w.m)}</div>`);
+    const back=`${pic(w.h,64)}<div class="big" style="font-size:58px">${w.h}</div>${pyHTML(w.p)}<div class="vbig" style="font-size:20px;font-weight:500">${esc(w.m)}</div>`;
     HM.innerHTML=`<div class="flash">
       <div class="frow"><div class="seg"><button data-fm="hv" class="${hv?'on':''}">Hán → Việt</button><button data-fm="vh" class="${hv?'':'on'}">Việt → Hán</button></div>
+      <label class="imgtoggle"><input type="checkbox" id="fimg" ${imgF?'checked':''}> Hình ở mặt trước</label>
       <span class="fprog">Đã xong ${seen}/${total} · còn ${q.length} thẻ</span></div>
       <div class="fcard" id="fcard"><div class="fin">
         <div class="face front"><span class="boxtag">Bài ${w.U} · mức ${box(w)}/5</span><button class="say" id="fsay" aria-label="Nghe">${ICON.spk}</button>${front}<span class="hint">Chạm hoặc nhấn Space để lật</span></div>
@@ -79,6 +80,7 @@ function startFlash(){
     $('#fsay').onclick=$('#fsay2').onclick=e=>{e.stopPropagation();speak(w.h)};
     $('#fflip').onclick=flip; $('#fyes').onclick=()=>rate(true); $('#fno').onclick=()=>rate(false);
     $$('[data-fm]',HM).forEach(b=>b.onclick=()=>{S.fmode=b.dataset.fm;save();face()});
+    $('#fimg').onchange=e=>{S.imgFront=e.target.checked;save();face()};
     A.setKey(e=>{if(e.code==='Space'){e.preventDefault();flip()}else if(e.key==='1')rate(false);else if(e.key==='2')rate(true)});
     if(hv) speak(w.h);
   }
@@ -111,7 +113,7 @@ function gMatch(){
   let sel=null,done=0,wrong=0; const t0=Date.now();
   HM.innerHTML=`<div class="play" style="max-width:720px">
     <div class="phead"><button class="back" id="pback">← Thoát</button><div class="ptitle">Ghép cặp</div><div class="pstats"><span>Thời gian <b id="mt">0</b>s</span><span>Sai <b id="mw">0</b></span><span>Còn <b id="ml">${words.length}</b> cặp</span></div></div>
-    <div class="mgrid">${tiles.map((t,k)=>`<button class="tile ${t.kind}" data-k="${k}">${esc(t.text)}</button>`).join('')}</div></div>`;
+    <div class="mgrid">${tiles.map((t,k)=>`<button class="tile ${t.kind}" data-k="${k}">${t.kind==='m'?pic(words[t.id].h,28)+'<span>'+esc(t.text)+'</span>':esc(t.text)}</button>`).join('')}</div></div>`;
   $('#pback').onclick=backGames;
   A.addTimer(setInterval(()=>{const el=$('#mt');if(el)el.textContent=Math.floor((Date.now()-t0)/1000)},250));
   $$('.tile',HM).forEach(b=>b.onclick=()=>{

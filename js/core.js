@@ -285,7 +285,15 @@ register('home',root=>{
   $('#wsay').onclick=e=>speak(w.h,false,e.currentTarget);
 });
 
-W.App={UNITS,ALLWORDS,ALLSENTS,S,save,$,$$,box,unit,addXP,renderStats,toast,rand,shuffle,sample,esc,toneOf,retone,baseSyl,pyHTML,pyPlain,pyKeys,
+/* ---------- hình minh họa (emoji hiển thị bằng Twemoji, lỗi mạng thì hiện emoji của máy) ---------- */
+const EMOJI={}; (W.EMOJI_RAW||'').trim().split('\n').forEach(l=>{const [h,...e]=l.trim().split(/\s+/);if(h)EMOJI[h]=e.filter(Boolean)});
+function twCode(e){const cps=[...e].map(c=>c.codePointAt(0).toString(16));return e.includes('‍')?cps.join('-'):cps.filter(c=>c!=='fe0f').join('-')}
+function pic(h,size=64){
+  const e=EMOJI[h]; if(!e||!e.length)return '';
+  return `<span class="pic" style="--ps:${size}px" aria-hidden="true">${e.map(x=>`<img src="https://cdn.jsdelivr.net/gh/jdecked/twemoji@15.1.0/assets/svg/${twCode(x)}.svg" alt="${x}" loading="lazy" draggable="false" onerror="this.replaceWith(document.createTextNode(this.alt))">`).join('')}</span>`;
+}
+
+W.App={UNITS,EMOJI,pic,ALLWORDS,ALLSENTS,S,save,$,$$,box,unit,addXP,renderStats,toast,rand,shuffle,sample,esc,toneOf,retone,baseSyl,pyHTML,pyPlain,pyKeys,
   unitWords,unitSents,distract,mastery,ICON,speak,voiceWarn,listen,stopListen,SR,scoreSpeech,bestMatch,markHTML,recogWarn,strip,
   cleanup,setKey:f=>keyHandler=f,addTimer:t=>timers.push(t),setRaf:r=>raf=r,onCleanup:f=>cleanups.push(f),
   main,setMain,showResult,runMC,menu,listenBtns,bindListen,unitSelect,register,start,mkSent};
