@@ -272,16 +272,30 @@ const MODS=[
 register('home',root=>{
   const w=ALLWORDS[Math.floor(Date.now()/864e5)%ALLWORDS.length];
   const u=unit(), known=ALLWORDS.filter(x=>box(x)>=3).length;
-  root.innerHTML=`<section class="hero">
-    <div class="hcard"><p class="eyebrow">HSK 3.0 · Cấp 1 · 506 từ</p><h1>Học tiếng Trung từ con số 0</h1>
-      <p>Bạn đã nhớ <b>${known}</b> / 506 từ. Đang học bài ${u.n}: <b>${esc(u.t)}</b>.</p>
-      <div class="pbar" style="margin:0 0 16px"><i style="width:${Math.round(known/5.06)}%"></i></div>
-      <div class="row l"><a class="btn primary" href="#hoc">Học tiếp bài ${u.n}</a><a class="btn" href="#mua">Chơi Mưa từ vựng</a></div></div>
-    <div class="hcard wod"><p class="eyebrow">Từ của hôm nay</p><div class="big">${w.h}</div>${pyHTML(w.p)}<div>${esc(w.m)}</div>
-      <button class="btn sm" id="wsay" style="margin-top:8px">${ICON.spk} Nghe phát âm</button></div>
+  const ART=W.ART||{};
+  root.innerHTML=`<section class="hero2">
+    <div class="water" aria-hidden="true">你</div>
+    <div class="lanterns">${ART.LANTERNS||''}</div>
+    <div class="coins">${ART.COINS||''}</div>
+    <div class="hero-txt">
+      <h1 class="display">Hán Ngữ<br>3.0</h1>
+      <p class="sub">Nói được tiếng Trung với <span class="pill"><i></i>506 từ</span></p>
+      <div class="cta"><a class="btn primary bigbtn" href="#hoc">${known?`Học tiếp bài ${u.n}`:'Bắt đầu học'}</a>
+        <p class="cta-note">Học miễn phí theo chuẩn HSK 3.0, không cần đăng ký tài khoản.</p></div>
+      <div class="hstats">
+        <div><small>Chưa thuộc</small><span class="old">${506-known} từ</span></div>
+        <span class="badge">${Math.round(known/5.06)}%</span>
+        <div><small>Đã nhớ</small><span class="now">${known} từ</span></div>
+      </div>
+    </div>
+    <div class="hero-art">${ART.PANDA||''}</div>
   </section>
-  <h2 class="eyebrow">Tất cả chuyên mục</h2>
-  <div class="mods">${MODS.map(m=>`<a class="mod" href="#${m[0]}"><span class="ghz">${m[1]}</span><b>${m[2]}</b><small>${m[3]}</small>${m[4]?`<span class="tag">${m[4]}</span>`:''}</a>`).join('')}</div>`;
+  <div class="home-row">
+    <div class="hcard wod"><p class="eyebrow">Từ của hôm nay</p>${pic(w.h,56)}<div class="big">${w.h}</div>${pyHTML(w.p)}<div>${esc(w.m)}</div>
+      <button class="btn sm" id="wsay" style="margin-top:8px">${ICON.spk} Nghe phát âm</button></div>
+    <div><h2 class="eyebrow">Tất cả chuyên mục</h2>
+    <div class="mods">${MODS.map(m=>`<a class="mod" href="#${m[0]}"><span class="ghz">${m[1]}</span><b>${m[2]}</b><small>${m[3]}</small>${m[4]?`<span class="tag">${m[4]}</span>`:''}</a>`).join('')}</div></div>
+  </div>`;
   $('#wsay').onclick=e=>speak(w.h,false,e.currentTarget);
 });
 

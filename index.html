@@ -4,14 +4,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Hán Ngữ 3.0 Luyện Tập</title>
-<meta name="description" content="Tự học tiếng Trung HSK 3.0 cấp 1: 506 từ vựng, flashcard, game Mưa từ vựng, luyện viết, pinyin, luyện nói, đề thi thử, 214 bộ thủ, hội thoại và ngữ pháp.">
+<meta name="description" content="Tự học tiếng Trung HSK 3.0 cấp 1: 506 từ vựng có hình minh họa, flashcard, game Mưa từ vựng, luyện viết, pinyin, luyện nói, đề thi thử, 214 bộ thủ, hội thoại và ngữ pháp.">
+<meta name="theme-color" content="#A9D6CC">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Noto+Serif+SC:wght@500;700;900&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@400;600;700&family=Raleway:wght@400;500;600;700&family=Be+Vietnam+Pro:wght@400;500;600;700&family=Noto+Serif+SC:wght@500;700;900&display=swap">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+<div class="frame">
 <header class="top"><div class="wrap topin">
-  <a class="brand" href="#home"><span class="mark">汉</span><span><b>Hán Ngữ 3.0</b><small>HSK 3.0 · Cấp 1</small></span></a>
+  <a class="brand" href="#home"><span class="mark" id="logo"><span class="hz">你</span></span><span><b>Hán Ngữ 3.0</b><small>Trường tự học tiếng Trung</small></span></a>
   <div class="stats">
     <div class="stat" title="Số ngày học liên tiếp"><b id="sStreak">0</b>ngày<span> liên tiếp</span></div>
     <div class="stat"><b id="sXp">0</b>XP</div>
@@ -24,11 +26,13 @@
 <main class="wrap page" id="root"></main>
 
 <footer class="wrap foot">
-  <p>Từ vựng theo danh sách 506 từ cấp 1 của chuẩn HSK 3.0 (GF0025-2021). Nghĩa tiếng Việt, câu mẫu, hội thoại và đề luyện tập được biên soạn để tự học; đề thi thử là đề mô phỏng, không phải đề chính thức. Giọng đọc và nhận dạng giọng nói dùng tính năng có sẵn của trình duyệt. Tiến độ lưu trên trình duyệt này.</p>
+  <p>Từ vựng theo danh sách 506 từ cấp 1 của chuẩn HSK 3.0 (GF0025-2021). Nghĩa tiếng Việt, câu mẫu, hội thoại và đề luyện tập được biên soạn để tự học; đề thi thử là đề mô phỏng, không phải đề chính thức. Hình minh họa từ vựng dùng bộ biểu tượng Twemoji (CC-BY 4.0). Giọng đọc và nhận dạng giọng nói dùng tính năng có sẵn của trình duyệt. Tiến độ lưu trên trình duyệt này.</p>
 </footer>
+</div>
 <div class="toast" id="toast" role="status"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5.0/dist/hanzi-writer.min.js"></script>
+<script src="js/art.js"></script>
 <script src="js/data-hsk1.js"></script>
 <script src="js/data-extra.js"></script>
 <script src="js/data-emoji.js"></script>
@@ -36,6 +40,6 @@
 <script src="js/hoc.js"></script>
 <script src="js/modules.js"></script>
 <script src="js/modules2.js"></script>
-<script>App.start();</script>
+<script>document.getElementById('logo').insertAdjacentHTML('afterbegin',ART.LOGO);App.start();</script>
 </body>
 </html>
