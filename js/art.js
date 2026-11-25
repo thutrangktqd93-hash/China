@@ -67,7 +67,7 @@ const PANDA=`<svg viewBox="0 0 480 470" xmlns="http://www.w3.org/2000/svg" role=
   <g transform="translate(226 292) rotate(-4)">
     <path d="M-70 -30 Q-35 -40 0 -26 L0 34 Q-35 20 -70 30Z" fill="#FFF8F2" stroke="#E7C3B6" stroke-width="2"/>
     <path d="M70 -30 Q35 -40 0 -26 L0 34 Q35 20 70 30Z" fill="#FFF1E8" stroke="#E7C3B6" stroke-width="2"/>
-    <text x="-36" y="10" text-anchor="middle" font-family="Noto Serif SC, serif" font-weight="900" font-size="30" fill="#D9574B">汉</text>
+    <text x="-36" y="10" text-anchor="middle" font-family="LXGW WenKai Screen, Kaiti SC, STKaiti, KaiTi, serif" font-size="30" fill="#D9574B">汉</text>
     <path d="M14 -14 H56 M14 -2 H56 M14 10 H48" stroke="#E7C3B6" stroke-width="3" stroke-linecap="round"/>
   </g>
   <!-- tay -->

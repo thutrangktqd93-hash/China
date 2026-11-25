@@ -12,7 +12,7 @@
   --shadow:0 2px 4px rgba(180,70,63,.06),0 10px 28px rgba(180,70,63,.09);
   --f-body:"Raleway","Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",sans-serif;
   --f-display:"Josefin Sans","Raleway",system-ui,sans-serif;
-  --f-hz:"Noto Serif SC","Songti SC","STSong","SimSun",serif;
+  --f-hz:"LXGW WenKai Screen","Kaiti SC","STKaiti","KaiTi",serif;
   color-scheme:light;
 }
 
@@ -29,6 +29,8 @@ button:focus-visible,input:focus-visible,a:focus-visible,select:focus-visible{ou
 .frame{position:relative;max-width:1280px;margin:22px auto;background:var(--paper);border:10px solid var(--frame);border-radius:40px;overflow-x:clip;box-shadow:0 20px 60px rgba(40,90,80,.18)}
 .wrap{max-width:1180px;margin:0 auto;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px))}
 .hz{font-family:var(--f-hz)}
+/* font Khải thể chỉ có 1 độ đậm: không cho trình duyệt tự tô đậm giả làm nhòe nét */
+*{font-synthesis-weight:none}
 kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 5px;color:var(--muted);background:var(--paper)}
 h2.sect{font-family:var(--f-display);font-weight:600;color:var(--deep);font-size:clamp(26px,3.6vw,36px);margin:0 0 6px;letter-spacing:.02em;text-wrap:balance}
 .lead{color:var(--muted);margin:0 0 18px;max-width:70ch}
