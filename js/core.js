@@ -286,7 +286,7 @@ function runMC(cfg){
     if(ok){combo++;correct++;let g=10+Math.min(combo-1,5)*2;
       if(cfg.timed)g+=Math.round(Math.max(0,1-(performance.now()-r._t0)/(cfg.timed*1000))*10);
       score+=g; if(r.word)S.box[r.word.h]=Math.min(5,box(r.word)+ (box(r.word)<2?1:0));}
-    else{combo=0;if(cfg.lives)lives--;$('.prompt').classList.add('shake'); if(r.word){S.box[r.word.h]=Math.max(0,box(r.word)-1)}}
+    else{combo=0;if(cfg.lives)lives--;$('.prompt').classList.add('shake'); if(r.word){S.box[r.word.h]=Math.max(0,box(r.word)-1); if(W.App.srs)W.App.srs.flag(r.word.h)}}
     save();
     $('#pstats').innerHTML=stats();
     const over=cfg.lives&&lives<=0;

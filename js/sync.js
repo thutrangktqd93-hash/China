@@ -16,6 +16,19 @@ function mergeState(L,R){
   else {o.last=L.last||'';o.streak=+L.streak||0}
   o.box=maxMap(L.box,R.box); o.best=maxMap(L.best,R.best); o.speak=maxMap(L.speak,R.speak);
   o.wrote={...(R.wrote||{}),...(L.wrote||{})};
+  /* lịch ôn SRS: mỗi từ giữ bản được đánh giá gần nhất (lastReviewedAt mới hơn) */
+  if(L.review||R.review){
+    const rv={...(R.review||{})};
+    for(const [h,c] of Object.entries(L.review||{})){
+      const r=rv[h];
+      if(!r||(c.lastReviewedAt||0)>(r.lastReviewedAt||0)||((c.lastReviewedAt||0)===(r.lastReviewedAt||0)&&(c.totalReviews||0)>=(r.totalReviews||0)))rv[h]=c;
+    }
+    o.review=rv;
+    /* mức nhớ cũ (S.box) của từ đã được đánh giá SRS đi theo lịch ôn, không lấy mức cao nhất */
+    if(A.srs)for(const [h,c] of Object.entries(rv))if((c.totalReviews||0)>0)o.box[h]=A.srs.boxFrom(c);
+  }
+  o.schemaVersion=Math.max(+L.schemaVersion||1,+R.schemaVersion||1);
+  if(L.srsDay||R.srsDay){const a=L.srsDay||{d:'',n:0},b=R.srsDay||{d:'',n:0};o.srsDay=a.d===b.d?{d:a.d,n:Math.max(a.n,b.n)}:(a.d>b.d?a:b)}
   if(L.sh||R.sh)o.sh={...(R.sh||{}),...(L.sh||{}),best:maxMap((L.sh||{}).best,(R.sh||{}).best)};
   const days={...(R.days||{})};
   for(const [d,v] of Object.entries(L.days||{})){

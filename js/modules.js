@@ -104,7 +104,7 @@ function rainPlay(root){
   function miss(d){
     remove(d); lives--; combo=0; if(d.boss)bossOut=false;
     if(!weak.some(x=>x.h===d.w.h))weak.push(d.w); missed.push(d.w);
-    S.box[d.w.h]=0;
+    S.box[d.w.h]=0; if(A.srs)A.srs.flag(d.w.h);
     A.toast(`${d.w.h} · ${pyPlain(d.w.p)} · ${d.w.m}`);
     hud(); if(lives<=0)end();
   }

@@ -52,48 +52,111 @@ function renderVocab(){
   $('#gof').onclick=toTab('flash'); $('#gog').onclick=toTab('game');
 }
 
-/* ---------- flashcard (Leitner 0–5) ---------- */
-function startFlash(){
+/* ---------- flashcard: ôn tập cách quãng (SRS, xem js/srs.js) ---------- */
+const RLABEL={again:['Quên','Again'],hard:['Khó','Hard'],good:['Tốt','Good'],easy:['Rất dễ','Easy']};
+function exampleFor(w){
+  const inUnit=UNITS[w.U-1]?UNITS[w.U-1].sents:[];
+  return inUnit.find(s=>s.tokens.includes(w.h))||ALLSENTS.find(s=>s.tokens.includes(w.h))||null;
+}
+function flashHead(scope){
+  const R=A.srs, c=R.counts(scope==='all'?A.ALLWORDS:A.unitWords());
+  return `<div class="frow">
+      <div class="seg" id="fscope"><button data-sc="unit" class="${scope==='unit'?'on':''}">${S.prev&&S.unit>1?`Bài 1–${S.unit}`:`Bài ${S.unit}`}</button><button data-sc="all" class="${scope==='all'?'on':''}">Ôn tổng hợp</button></div>
+      <label class="fnew">Từ mới/ngày <input type="number" id="fnpd" min="0" max="50" step="1" value="${R.newPerDay()}" inputmode="numeric"></label></div>
+    <div class="srsbar" aria-label="Tình trạng ghi nhớ">
+      <span class="sb-over" title="Quá hạn ôn"><b>${c.overdue}</b> quá hạn</span>
+      <span class="sb-due" title="Đến hạn ôn hôm nay"><b>${c.due+c['learning-due']}</b> đến hạn</span>
+      <span class="sb-learn" title="Đang học, chưa đến hạn"><b>${c.learning}</b> đang học</span>
+      <span class="sb-new" title="Chưa học"><b>${c.new}</b> mới</span>
+      <span class="sb-mast" title="Khoảng ôn từ 21 ngày"><b>${c.mastered}</b> nhớ dài hạn</span>
+    </div>`;
+}
+function bindFlashHead(){
+  $$('#fscope button').forEach(b=>b.onclick=()=>{S.fscope=b.dataset.sc;save();startFlash()});
+  const n=$('#fnpd'); if(n)n.onchange=()=>{S.srsCfg=Object.assign({},S.srsCfg,{newPerDay:Math.max(0,Math.min(50,Math.round(+n.value||0)))});save();startFlash()};
+}
+function startFlash(extraNew){
   A.cleanup();
-  const deck=shuffle([...A.unitWords()]).sort((a,b)=>box(a)-box(b));
-  let q=deck.map(w=>({w,retry:0})), known=0, seen=0, flipped=false;
-  const total=deck.length;
+  const R=A.srs, scope=S.fscope==='all'?'all':'unit';
+  const Q=R.queue(scope,{extraNew:extraNew||0});
+  if(!Q.items.length)return flashEmpty(scope,Q);
+  const q=Q.items.map(x=>({w:x.w,kind:x.kind,again:0}));
+  const total=q.length, tally={again:0,hard:0,good:0,easy:0}; let done=0, flipped=false, busy=false;
   function face(){
     if(!q.length)return finish();
-    const {w}=q[0]; flipped=false;
-    const hv=S.fmode==='hv', imgF=S.imgFront!==false;
+    const it=q[0], w=it.w; flipped=false; busy=false;
+    const hv=S.fmode!=='vh', imgF=S.imgFront!==false;
+    const st=R.status(w.h), od=st==='overdue'?R.overdueDays(w.h):0;
+    const tag=`${R.STATUS_TEXT[st]||'Từ mới'}${od>0?` ${od} ngày`:''} · Bài ${w.U}`;
     const front=(imgF?pic(w.h,76):'')+(hv?`<div class="big">${w.h}</div>`:`<div class="vbig">${esc(w.m)}</div>`);
-    const back=`${pic(w.h,64)}<div class="big" style="font-size:58px">${w.h}</div>${pyHTML(w.p)}<div class="vbig" style="font-size:20px;font-weight:500">${esc(w.m)}</div>`;
+    const ex=exampleFor(w);
+    const back=`${pic(w.h,56)}<div class="big" style="font-size:56px">${w.h}</div>${pyHTML(w.p)}<div class="vbig" style="font-size:20px;font-weight:500">${esc(w.m)}</div>
+      ${ex?`<div class="fex"><button class="say sm" id="fexsay" aria-label="Nghe câu ví dụ">${ICON.spk}</button><div><span class="hz">${ex.h}</span><span class="sp">${esc(ex.p)}</span><span class="sm">${esc(ex.m)}</span></div></div>`:''}`;
+    const pv=R.preview(w.h);
     HM.innerHTML=`<div class="flash">
+      ${flashHead(scope)}
       <div class="frow"><div class="seg"><button data-fm="hv" class="${hv?'on':''}">Hán → Việt</button><button data-fm="vh" class="${hv?'':'on'}">Việt → Hán</button></div>
-      <label class="imgtoggle"><input type="checkbox" id="fimg" ${imgF?'checked':''}> Hình ở mặt trước</label>
-      <span class="fprog">Đã xong ${seen}/${total} · còn ${q.length} thẻ</span></div>
+        <label class="imgtoggle"><input type="checkbox" id="fimg" ${imgF?'checked':''}> Hình ở mặt trước</label>
+        <span class="fprog">Xong ${done}/${total} · còn ${q.length}</span></div>
       <div class="fcard" id="fcard"><div class="fin">
-        <div class="face front"><span class="boxtag">Bài ${w.U} · mức ${box(w)}/5</span><button class="say" id="fsay" aria-label="Nghe">${ICON.spk}</button>${front}<span class="hint">Chạm hoặc nhấn Space để lật</span></div>
-        <div class="face back"><span class="boxtag">Mặt sau</span><button class="say" id="fsay2" aria-label="Nghe">${ICON.spk}</button>${back}</div>
+        <div class="face front"><span class="boxtag st-${st}">${esc(tag)}</span><button class="say" id="fsay" aria-label="Nghe">${ICON.spk}</button>${front}<span class="hint">Nhớ lại nghĩa và cách đọc, rồi chạm hoặc nhấn Space để lật</span></div>
+        <div class="face back"><span class="boxtag st-${st}">${esc(tag)}</span><button class="say" id="fsay2" aria-label="Nghe">${ICON.spk}</button>${back}</div>
       </div></div>
-      <div class="factions"><button class="btn bad" id="fno">Chưa nhớ <kbd>1</kbd></button><button class="btn flipbtn" id="fflip">Lật thẻ <kbd>Space</kbd></button><button class="btn ok" id="fyes">Đã nhớ <kbd>2</kbd></button></div>
+      <div class="factions" id="fact"><button class="btn primary flipbtn wide" id="fflip">Lật thẻ <kbd>Space</kbd></button></div>
+      <div class="rategrid" id="frate" hidden>
+        ${R.RATINGS.map((r,k)=>`<button class="rbtn r-${r}" data-r="${r}" type="button"><b>${RLABEL[r][0]}</b><small>${RLABEL[r][1]} · ${pv[r]}</small><kbd>${k+1}</kbd></button>`).join('')}
+      </div>
+      <p class="meta fhelp">Chỉ khi bạn tự đánh giá sau khi lật thẻ, lịch ôn mới thay đổi. <b>Quên</b>: ôn lại sau ít phút · <b>Khó</b>: nhớ nhưng phải cố · <b>Tốt</b>: nhớ được · <b>Rất dễ</b>: nhớ ngay.</p>
     </div>`;
+    bindFlashHead();
     const card=$('#fcard');
-    const flip=()=>{flipped=!flipped;card.classList.toggle('flip',flipped);if(flipped)speak(w.h)};
-    card.onclick=e=>{if(!e.target.closest('.say'))flip()};
+    const flip=()=>{if(flipped)return;flipped=true;card.classList.add('flip');$('#fact').hidden=true;$('#frate').hidden=false;speak(w.h)};
+    card.onclick=e=>{if(e.target.closest('.say'))return; if(!flipped)flip(); else card.classList.toggle('flip')};
     $('#fsay').onclick=$('#fsay2').onclick=e=>{e.stopPropagation();speak(w.h)};
-    $('#fflip').onclick=flip; $('#fyes').onclick=()=>rate(true); $('#fno').onclick=()=>rate(false);
+    const exs=$('#fexsay'); if(exs)exs.onclick=e=>{e.stopPropagation();speak(ex.h,false,exs)};
+    $('#fflip').onclick=flip;
+    $$('#frate .rbtn').forEach(b=>b.onclick=()=>rate(b.dataset.r));
     $$('[data-fm]',HM).forEach(b=>b.onclick=()=>{S.fmode=b.dataset.fm;save();face()});
     $('#fimg').onchange=e=>{S.imgFront=e.target.checked;save();face()};
-    A.setKey(e=>{if(e.code==='Space'){e.preventDefault();flip()}else if(e.key==='1')rate(false);else if(e.key==='2')rate(true)});
-    if(hv) speak(w.h);
+    A.setKey(e=>{
+      if(e.code==='Space'){e.preventDefault();flip()}
+      else if(flipped&&['1','2','3','4'].includes(e.key))rate(R.RATINGS[+e.key-1]);
+    });
+    if(hv)speak(w.h);
   }
-  function rate(ok){
-    const it=q.shift(), w=it.w;
-    if(ok){S.box[w.h]=Math.min(5,box(w)+1); if(!it.retry)known++; seen++}
-    else{S.box[w.h]=0; if(it.retry<2){it.retry++;q.splice(Math.min(q.length,3),0,it)}else seen++}
-    save(); renderUnits(); face();
+  function rate(r){
+    if(!flipped||busy)return; busy=true;
+    $$('#frate .rbtn').forEach(b=>b.disabled=true);
+    const it=q.shift(); const c=R.rate(it.w.h,r);
+    if(!c){busy=false;q.unshift(it);$$('#frate .rbtn').forEach(b=>b.disabled=false);return}
+    tally[r]++;
+    if(r==='again'&&it.again<2){it.again++;it.kind='learning-due';q.splice(Math.min(q.length,4),0,it)}else done++;
+    renderUnits(); face();
   }
   function finish(){
-    A.showResult({title:'Hoàn thành bộ thẻ',score:null,correct:known,total,xp:known*2+5,replay:startFlash,back:toTab('vocab'),backLabel:'Xem lại từ vựng'});
+    const rated=tally.again+tally.hard+tally.good+tally.easy, rem=tally.hard+tally.good+tally.easy;
+    const tomorrow=R.upcoming(1);
+    const extra=`<div class="rsum">${R.RATINGS.map(r=>`<span class="r-${r}"><b>${tally[r]}</b>${RLABEL[r][0]}</span>`).join('')}</div>
+      <p class="meta">Đến hạn trong ngày mai: <b>${tomorrow}</b> từ. Từ mới còn được học hôm nay: <b>${R.newLeft()}</b>.</p>`;
+    A.showResult({title:'Hoàn thành phiên ôn',score:null,correct:rem,total:rated,xp:done*2+5,replay:()=>startFlash(),back:toTab('vocab'),backLabel:'Xem lại từ vựng',extra});
   }
   face();
+}
+function flashEmpty(scope,Q){
+  const R=A.srs, pool=scope==='all'?A.ALLWORDS:A.unitWords(), c=R.counts(pool);
+  const nextDue=Object.entries(S.review||{}).filter(([h,x])=>x.dueAt&&x.dueAt>Date.now()&&pool.some(w=>w.h===h)).map(([,x])=>x.dueAt).sort((a,b)=>a-b)[0];
+  const remainingNew=c.new;
+  HM.innerHTML=`<div class="flash">${flashHead(scope)}
+    <div class="note fempty"><b>Hôm nay đã ôn xong phần này.</b><br>
+      ${remainingNew?(R.newPerDay()?`Đã học đủ ${R.newPerDay()} từ mới hôm nay`:`Bạn đang đặt 0 từ mới mỗi ngày`)+` (còn ${remainingNew} từ mới trong phạm vi đang chọn).`:'Không còn từ mới trong phạm vi đang chọn.'}
+      ${nextDue?` Lần ôn tiếp theo: <b>${new Date(nextDue).toLocaleString('vi-VN',{weekday:'long',hour:'2-digit',minute:'2-digit',day:'numeric',month:'numeric'})}</b>.`:''}</div>
+    <div class="row">${remainingNew?`<button class="btn primary" id="fmore">Học thêm 5 từ mới</button>`:''}
+      ${scope==='unit'?`<button class="btn" id="fall">Ôn tổng hợp các bài</button>`:''}
+      <button class="btn" id="fgame">Chơi game ôn từ</button></div></div>`;
+  bindFlashHead();
+  const m=$('#fmore'); if(m)m.onclick=()=>startFlash((R.today().n+5)-R.newPerDay()>0?(R.today().n+5)-R.newPerDay():5);
+  const al=$('#fall'); if(al)al.onclick=()=>{S.fscope='all';save();startFlash()};
+  $('#fgame').onclick=toTab('game');
 }
 
 /* ---------- trò chơi ---------- */

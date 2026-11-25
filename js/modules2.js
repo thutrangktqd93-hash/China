@@ -24,13 +24,13 @@ function examHome(root){
 function buildExam(){
   const Q=[], words=ALLWORDS, used=new Set();
   const pickW=f=>{const c=shuffle(words.filter(w=>!used.has(w.h)&&(!f||f(w))));const w=c[0];used.add(w.h);return w};
-  for(let i=0;i<10;i++){const w=pickW();Q.push({part:'l',type:'Nghe từ, chọn chữ Hán đúng',audio:w.h,
+  for(let i=0;i<10;i++){const w=pickW();Q.push({part:'l',type:'Nghe từ, chọn chữ Hán đúng',word:w.h,audio:w.h,
     opts:shuffle([w,...distract(w,3,'h',words)]).map(x=>({html:`<span class="hz">${x.h}</span>`,ok:x.h===w.h})),exp:`${w.h} · ${pyPlain(w.p)} · ${w.m}`})}
   sample(ALLSENTS,10).forEach(s=>{Q.push({part:'l',type:'Nghe câu, chọn nghĩa đúng',audio:s.h,one:true,
     opts:shuffle([s,...shuffle(ALLSENTS.filter(x=>x.m!==s.m)).slice(0,3)]).map(x=>({html:esc(x.m),ok:x===s})),exp:`${s.h} · ${s.p}`})});
-  for(let i=0;i<10;i++){const w=pickW();Q.push({part:'r',type:'Chọn nghĩa của từ',q:`<span class="hz">${w.h}</span>`,
+  for(let i=0;i<10;i++){const w=pickW();Q.push({part:'r',type:'Chọn nghĩa của từ',word:w.h,q:`<span class="hz">${w.h}</span>`,
     opts:shuffle([w,...distract(w,3,'m',words)]).map(x=>({html:esc(x.m),ok:x.h===w.h})),exp:`${w.h} · ${pyPlain(w.p)} · ${w.m}`})}
-  for(let i=0;i<5;i++){const w=pickW(x=>x.p.split(' ').some(toneOf));Q.push({part:'r',type:'Chọn pinyin đúng',q:`<span class="hz">${w.h}</span> <span class="meta">(${esc(w.m)})</span>`,
+  for(let i=0;i<5;i++){const w=pickW(x=>x.p.split(' ').some(toneOf));Q.push({part:'r',type:'Chọn pinyin đúng',word:w.h,q:`<span class="hz">${w.h}</span> <span class="meta">(${esc(w.m)})</span>`,
     opts:A.toneOptions(w).map(o=>({html:pyHTML(o.p),ok:o.ok})),exp:`${w.h} · ${pyPlain(w.p)}`})}
   const lookup=new Map(words.map(w=>[w.h,w]));
   const blanks=shuffle(ALLSENTS.filter(s=>s.tokens.some(t=>lookup.has(t)&&t.length>=1))).slice(0,5);
@@ -71,7 +71,7 @@ function examRun(root){
   function submit(timeout){
     if(done)return; done=true; A.cleanup(); speechSynthesis&&speechSynthesis.cancel();
     let l=0,r=0;
-    Q.forEach((q,i)=>{const ok=ans[i]>=0&&q.opts[ans[i]].ok; if(ok){q.part==='l'?l++:r++}
+    Q.forEach((q,i)=>{const ok=ans[i]>=0&&q.opts[ans[i]].ok; if(ok){q.part==='l'?l++:r++} else if(q.word&&ans[i]>=0&&A.srs)A.srs.flag(q.word);
       const it=$('#q'+i); it.classList.add(ok?'right':'wrong');
       $$(`.opt[data-q="${i}"]`,root).forEach((b,k)=>{b.disabled=true;if(q.opts[k].ok)b.classList.add('ok');else if(k===ans[i])b.classList.add('bad')});
       $('#x'+i).innerHTML=`${ok?'<b style="color:var(--ok)">Đúng</b>':ans[i]<0?'<b style="color:var(--cinnabar)">Bỏ trống</b>':'<b style="color:var(--cinnabar)">Sai</b>'} · ${esc(q.exp)}`;
