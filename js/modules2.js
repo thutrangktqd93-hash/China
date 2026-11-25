@@ -1,16 +1,16 @@
-/* ================= Thi thử · Bộ thủ · Hội thoại · Ngữ pháp ================= */
+/* ================= Kiểm tra tổng hợp · Bộ thủ · Hội thoại · Ngữ pháp ================= */
 (function(){
 const A=window.App, {UNITS,ALLWORDS,ALLSENTS,S,save,$,$$,box,esc,pyHTML,pyPlain,toneOf,shuffle,sample,rand,distract,ICON,speak}=A;
 
 /* =================================================================
-   THI THỬ HSK 1 (đề mô phỏng sinh ngẫu nhiên)
+   KIỂM TRA TỔNG HỢP CẤP 1 – GF0025-2021 (đề luyện tập nội bộ sinh ngẫu nhiên, không phải đề thi chính thức)
    ================================================================= */
 A.register('thi',root=>{A.setMain(root);examHome(root)});
 function examHome(root){
   A.cleanup();
   const hist=(S.exams||[]).slice(-8).reverse();
-  root.innerHTML=`<h2 class="sect">Thi thử HSK 1</h2>
-  <p class="lead">Đề mô phỏng 40 câu, mỗi lần làm sẽ ra đề mới từ 506 từ HSK 3.0 cấp 1. Làm trong 30 phút, nộp bài để xem điểm và giải thích câu sai. Đây là đề luyện tập, không phải đề thi chính thức.</p>
+  root.innerHTML=`<h2 class="sect">Kiểm tra tổng hợp cấp 1 – GF0025-2021</h2>
+  <p class="lead">Đề luyện tập nội bộ 40 câu, mỗi lần làm sẽ ra đề mới từ ${A.ALLWORDS.length} từ của danh sách cấp 1 (GF0025-2021). Làm trong 30 phút, nộp bài để xem điểm và giải thích câu sai. <b>Đây không phải đề thi HSK chính thức</b> và không theo cấu trúc đề thi HSK mới.</p>
   ${A.voicePicker()}
   <div class="tgrid" style="margin-bottom:18px">
     <div class="tcard"><b>Phần 1 · Nghe (20 câu)</b><p>Câu 1–10: nghe từ, chọn chữ Hán đúng.<br>Câu 11–20: nghe câu, chọn nghĩa đúng.</p></div>
@@ -52,7 +52,7 @@ function examRun(root){
     ${q.q?`<div class="qtext">${q.q}</div>`:''}
     <div class="opts ${q.one?'one':''}">${q.opts.map((o,k)=>`<button class="opt" data-q="${i}" data-k="${k}"><kbd>${'ABCD'[k]}</kbd><span>${o.html}</span></button>`).join('')}</div>
     <div class="qexp" id="x${i}"></div></div>`;
-  root.innerHTML=`<div class="exhead"><b>Thi thử HSK 1</b><span class="meta" id="eprog">Đã làm 0/40</span><span class="clock" id="eclock">30:00</span><button class="btn primary sm" id="esub">Nộp bài</button></div>
+  root.innerHTML=`<div class="exhead"><b>Kiểm tra tổng hợp cấp 1</b><span class="meta" id="eprog">Đã làm 0/40</span><span class="clock" id="eclock">30:00</span><button class="btn primary sm" id="esub">Nộp bài</button></div>
     <h3 class="eyebrow" style="margin-top:14px">Phần 1 · Nghe</h3><div class="qlist">${Q.map((q,i)=>q.part==='l'?qhtml(q,i):'').join('')}</div>
     <h3 class="eyebrow" style="margin-top:24px">Phần 2 · Đọc</h3><div class="qlist">${Q.map((q,i)=>q.part==='r'?qhtml(q,i):'').join('')}</div>
     <div class="row" style="margin-top:20px"><button class="btn primary" id="esub2">Nộp bài</button></div><div id="eres"></div>`;
@@ -78,7 +78,7 @@ function examRun(root){
     });
     const s=Math.round((l+r)*2.5);
     S.exams=(S.exams||[]).concat({d:new Date().toLocaleString('vi-VN',{dateStyle:'short',timeStyle:'short'}),l,r,s}).slice(-30); save();
-    A.addXP(10+(l+r),"Thi thử HSK 1",`${s} điểm · Nghe ${l}/20 · Đọc ${r}/20`);
+    A.addXP(10+(l+r),"Kiểm tra tổng hợp cấp 1",`${s} điểm · Nghe ${l}/20 · Đọc ${r}/20`);
     const pass=s>=60;
     $('#eres').innerHTML=`<div class="result" style="margin-top:24px"><div class="seal ${pass?'':'long'}">${pass?'合格':'加油'}</div>
       <h2>${s} / 100 điểm</h2><p class="gloss">${timeout?'Hết giờ, bài đã được nộp. ':''}${pass?'Đạt yêu cầu':'Chưa đạt, cố lên nhé'}</p>

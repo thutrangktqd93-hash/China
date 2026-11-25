@@ -9,7 +9,7 @@ const UNITS = W.HSK1_RAW.map((r,i)=>({
   sents:r[3].trim().split('\n').map(l=>{const [s,p,m]=l.split('|');return mkSent(s,p,m,i+1)})
 }));
 function mkSent(s,p,m,U){
-  return {tokens:s.replace(/[。？！，、：]/g,' ').trim().split(/\s+/), h:s.replace(/\s+/g,''), p:p.trim(), m:m.trim(), U};
+  return {raw:s.trim(), tokens:s.replace(/[。？！，、：]/g,' ').trim().split(/\s+/), h:s.replace(/\s+/g,''), p:p.trim(), m:m.trim(), U};
 }
 const ALLWORDS = UNITS.flatMap(u=>u.words);
 const ALLSENTS = UNITS.flatMap(u=>u.sents);
@@ -56,6 +56,7 @@ setInterval(()=>{if(document.visibilityState==='visible'&&Date.now()-lastInput<1
 function renderStats(){
   $('#sXp').textContent=S.xp; $('#sStreak').textContent=S.streak;
   $('#sKnown').textContent=ALLWORDS.filter(w=>box(w)>=3).length;
+  const kt=$('#sKnownTotal'); if(kt)kt.textContent='/ '+ALLWORDS.length;
 }
 let toastT;
 function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),1700)}
@@ -128,7 +129,7 @@ function loadVoices(){
   refreshPicker();
 }
 if('speechSynthesis' in W){loadVoices();speechSynthesis.onvoiceschanged=loadVoices;setTimeout(loadVoices,800)}
-function speak(text,slow,btn){
+function speak(text,slow,btn,onb){
   return new Promise(res=>{
     if(!('speechSynthesis' in W)){toast('Trình duyệt này không hỗ trợ đọc thành tiếng');return res()}
     speechSynthesis.cancel();
@@ -137,7 +138,7 @@ function speak(text,slow,btn){
     u.rate=typeof slow==="number"?slow:slow?0.55:S.rate;
     let done=false; const fin=()=>{if(done)return;done=true;if(btn)btn.classList.remove('playing');res()};
     if(btn)btn.classList.add('playing');
-    u.onend=fin; u.onerror=fin;
+    u.onend=fin; u.onerror=fin; if(onb)u.onboundary=e=>{try{onb(e.charIndex)}catch(x){}};
     setTimeout(fin, 1500+String(text).length*600/(u.rate||1)); // phòng khi trình duyệt không báo onend
     speechSynthesis.speak(u);
   });
@@ -323,7 +324,7 @@ function unitSelect(onChange){
 /* ---------- router ---------- */
 const ROUTES={}, NAV=[
   ['home','Trang chủ'],['hoc','Học từ vựng'],['mua','Mưa từ vựng'],['viet','Luyện viết'],['pinyin','Pinyin'],
-  ['noi','Luyện nói'],['shadow','Shadowing'],['hoithoai','Hội thoại'],['nguphap','Ngữ pháp'],['bothu','Bộ thủ'],['thi','Thi thử'],['lichsu','Lịch sử']];
+  ['noi','Luyện nói'],['shadow','Shadowing'],['hoithoai','Hội thoại'],['nguphap','Ngữ pháp'],['bothu','Bộ thủ'],['thi','Kiểm tra'],['lichsu','Lịch sử']];
 function register(name,fn){ROUTES[name]=fn}
 function route(){
   cleanup(); stopListen(); if('speechSynthesis' in W)speechSynthesis.cancel();
@@ -343,7 +344,7 @@ function start(){
 
 /* ---------- trang chủ ---------- */
 const MODS=[
-  ['hoc','学','Học từ vựng HSK 1','506 từ chia 22 bài: thẻ từ, flashcard, 3 game và 3 bài luyện nghe.'],
+  ['hoc','学','Học từ vựng cấp 1',`${ALLWORDS.length} từ chia ${UNITS.length} bài: thẻ từ, flashcard, 3 game và 3 bài luyện nghe.`],
   ['mua','雨','Mưa từ vựng','Nghĩa tiếng Việt hoặc âm thanh rơi xuống, gõ pinyin để bắn hạ. Có đấu trùm.','Mới'],
   ['viet','写','Luyện viết chữ Hán','Xem thứ tự nét và tự viết trên ô Mễ tự cách, báo nét sai.'],
   ['pinyin','拼','Lộ trình Pinyin','Thanh điệu, thanh mẫu, vận mẫu có âm thanh và bài luyện nghe.'],
@@ -352,7 +353,7 @@ const MODS=[
   ['hoithoai','话','Hội thoại','10 hội thoại theo tình huống, nghe từng câu và đóng vai.'],
   ['nguphap','语','Lượng từ & ngữ pháp','16 điểm ngữ pháp HSK 1, 20 lượng từ thông dụng, kèm bài tập.'],
   ['bothu','部','214 bộ thủ','Tra bộ thủ theo số nét, xem ví dụ trong từ HSK và chơi đoán nghĩa.'],
-  ['thi','考','Thi thử HSK 1','Đề mô phỏng 40 câu nghe và đọc, bấm giờ, chấm điểm, xem lại câu sai.'],
+  ['thi','考','Kiểm tra tổng hợp cấp 1','Đề luyện tập nội bộ 40 câu nghe và đọc theo danh sách GF0025-2021, bấm giờ, chấm điểm, xem lại câu sai.'],
   ['lichsu','历','Lịch sử học','Lịch các ngày đã học, số phút, XP, từ mới mỗi ngày và nhật ký từng bài. Sao lưu tiến độ sang máy khác.'],
 ];
 function ago(t){
@@ -379,6 +380,27 @@ function bindHello(root){
   if(f){f.onsubmit=e=>{e.preventDefault();const v=$('#nm').value.trim().slice(0,30);if(!v){$('#nm').focus();return}S.name=v;delete S.oldName;save();toast(`Chào ${v}!`);route()}}
   const rn=$('#rename'); if(rn)rn.onclick=()=>{S.oldName=S.name;S.name='';save();route();const i=$('#nm');if(i){i.focus();i.select()}};
 }
+/* thông tin chương trình học hiện tại (số liệu lấy từ curriculum.js, tính từ dữ liệu) */
+function curBlock(){
+  const C=W.App&&W.App.CURRICULUM; if(!C)return '';
+  const v=C.version, s=C.stats(), R=C.REFERENCE;
+  return `<section class="curcard" aria-labelledby="curttl">
+    <div class="curmain"><p class="eyebrow" id="curttl">Chương trình học hiện tại</p>
+      <h2>${esc(v.name)}</h2>
+      <p class="curgoal">${esc(v.goal)}.</p>
+      <ul class="curfacts">
+        <li><b>${s.total}</b><span>thẻ học</span></li>
+        <li><b>${s.matched}</b><span>khớp danh sách tham chiếu</span></li>
+        <li><b>${s.supplementary}</b><span>mục bổ sung</span></li>
+        <li><b>${s.units}</b><span>bài học</span></li>
+      </ul></div>
+    <details class="curmore"><summary>Nguồn và cách đối chiếu</summary>
+      <p>${esc(v.note)}</p>
+      <p>Đối chiếu ngày ${esc(R.checkedAt.split('-').reverse().join('/'))} với bộ dữ liệu <a href="${R.url}" target="_blank" rel="noopener">${esc(R.name)}</a> (${R.refTotal||R.words.length} mục, bản số hóa của bên thứ ba, không phải văn bản gốc của tiêu chuẩn): ${s.matched}/${s.total} thẻ có trong danh sách, ${s.duplicates} thẻ trùng, ${s.refMissing} mục của danh sách chưa có trên web.</p>
+      <p>${s.pinyinNoted} từ được ghi pinyin theo cách đọc thực tế (biến điệu của 一, 不 và khinh thanh), khác cách ghi thanh gốc của bộ tham chiếu. Nghĩa tiếng Việt, câu mẫu và bài luyện do web biên soạn để tự học.</p>
+    </details>
+  </section>`;
+}
 register('home',root=>{
   const w=ALLWORDS[Math.floor(Date.now()/864e5)%ALLWORDS.length];
   const u=unit(), known=ALLWORDS.filter(x=>box(x)>=3).length;
@@ -390,17 +412,18 @@ register('home',root=>{
     <div class="hero-txt">
       ${helloBlock()}
       <h1 class="display">Hán Ngữ<br>3.0</h1>
-      <p class="sub">Nói được tiếng Trung với <span class="pill"><i></i>506 từ</span></p>
+      <p class="sub">Nói được tiếng Trung với <span class="pill"><i></i>${ALLWORDS.length} từ</span></p>
       <div class="cta"><a class="btn primary bigbtn" href="#hoc">${known?`Học tiếp bài ${u.n}`:'Bắt đầu học'}</a>
-        <p class="cta-note">Học miễn phí theo chuẩn HSK 3.0, không cần đăng ký tài khoản.</p></div>
+        <p class="cta-note">Học miễn phí theo danh sách từ HSK 3.0 – GF0025-2021, không cần đăng ký tài khoản.</p></div>
       <div class="hstats">
-        <div><small>Chưa thuộc</small><span class="old">${506-known} từ</span></div>
-        <span class="badge">${Math.round(known/5.06)}%</span>
+        <div><small>Chưa thuộc</small><span class="old">${ALLWORDS.length-known} từ</span></div>
+        <span class="badge">${Math.round(known/ALLWORDS.length*100)}%</span>
         <div><small>Đã nhớ</small><span class="now">${known} từ</span></div>
       </div>
     </div>
     <div class="hero-art">${ART.PANDA||''}</div>
   </section>
+  ${curBlock()}
   <div class="home-row">
     <div class="hcard wod"><p class="eyebrow">Từ của hôm nay</p>${pic(w.h,56)}<div class="big">${w.h}</div>${pyHTML(w.p)}<div>${esc(w.m)}</div>
       <button class="btn sm" id="wsay" style="margin-top:8px">${ICON.spk} Nghe phát âm</button></div>

@@ -58,7 +58,7 @@ function histView(root,msg){
     <div class="kpi"><small>Hôm nay</small><b>${tr.min||0}<em> phút</em></b><span>${tr.xp||0} XP · ${Math.max(0,(tr.k||0)-(tr.k0||0))} từ mới</span></div>
     <div class="kpi"><small>Tuần này</small><b>${wk.min}<em> phút</em></b><span>${wk.xp} XP · ${wk.words} từ mới · ${wk.days}/7 ngày</span></div>
     <div class="kpi"><small>Chuỗi ngày học</small><b>${S.streak}<em> ngày</em></b><span>Tổng ${all.days} ngày đã học</span></div>
-    <div class="kpi"><small>Đã thuộc</small><b>${knownCount()}<em> / 506 từ</em></b><span>Tổng ${S.xp} XP · ${all.min} phút</span></div>
+    <div class="kpi"><small>Đã thuộc</small><b>${knownCount()}<em> / ${ALLWORDS.length} từ</em></b><span>Tổng ${S.xp} XP · ${all.min} phút</span></div>
   </div>
   <div class="sec"><h3>Lịch học 20 tuần gần đây</h3>${heatmap()}</div>
   <div class="sec"><h3>Nhật ký hoạt động</h3>${logList()}</div>

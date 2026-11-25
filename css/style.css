@@ -529,3 +529,17 @@ select{font:inherit;color:var(--ink);background:var(--surface);border:1px solid 
   .shact{flex-direction:column}
   .iconbtn{width:34px;height:34px}
 }
+
+/* ---------- Chương trình học hiện tại ---------- */
+.curcard{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:18px 28px;align-items:start;background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:18px 22px;margin:0 0 22px;box-shadow:var(--shadow)}
+.curcard h2{font-family:var(--f-display);font-size:22px;margin:2px 0 4px;color:var(--ink)}
+.curgoal{margin:0 0 12px;color:var(--muted);font-size:14.5px}
+.curfacts{list-style:none;display:flex;flex-wrap:wrap;gap:10px;margin:0;padding:0}
+.curfacts li{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:8px 12px;min-width:96px}
+.curfacts b{display:block;font-size:20px;color:var(--jade);line-height:1.1}
+.curfacts span{font-size:12.5px;color:var(--muted)}
+.curmore{font-size:13.5px;color:var(--muted)}
+.curmore summary{cursor:pointer;font-weight:600;color:var(--ink);padding:4px 0}
+.curmore p{margin:8px 0 0;line-height:1.55}
+.curmore a{color:var(--jade)}
+@media (max-width:760px){.curcard{grid-template-columns:1fr;padding:16px}.curfacts li{flex:1 1 40%}}
