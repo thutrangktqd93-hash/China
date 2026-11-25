@@ -16,7 +16,7 @@ const ALLSENTS = UNITS.flatMap(u=>u.sents);
 
 /* ---------- trạng thái ---------- */
 const KEY='hanngu30-hsk-v2';
-const S={xp:0,streak:0,last:'',box:{},unit:1,prev:false,rate:0.85,fmode:'hv',best:{},exams:[],speak:{},wrote:{},tab:'vocab'};
+const S={xp:0,streak:0,last:'',box:{},unit:1,prev:false,rate:0.85,fmode:'hv',best:{},exams:[],speak:{},wrote:{},tab:'vocab',name:'',log:[],days:{}};
 try{Object.assign(S,JSON.parse(localStorage.getItem(KEY)||'{}'))}catch(e){}
 if(!UNITS[S.unit-1])S.unit=1;
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
@@ -26,13 +26,33 @@ const $$=(s,el=document)=>[...el.querySelectorAll(s)];
 const box=w=>S.box[w.h]||0;
 const unit=()=>UNITS[S.unit-1];
 function dayStr(d){return d.toLocaleDateString('en-CA')}
-function addXP(n){
+/* ---------- nhật ký học: theo ngày (XP, phút, từ mới) và từng hoạt động ---------- */
+const knownCount=()=>ALLWORDS.filter(w=>(S.box[w.h]||0)>=3).length;
+function dayRec(){
+  const d=dayStr(new Date());
+  if(!S.days||typeof S.days!=='object')S.days={};
+  if(!S.days[d]){const k=knownCount();S.days[d]={xp:0,min:0,k0:k,k};}
+  return S.days[d];
+}
+function touchDay(){const r=dayRec();r.k=knownCount();return r}
+function logAct(label,detail,xp){
+  if(!Array.isArray(S.log))S.log=[];
+  S.log.push({t:Date.now(),a:String(label).slice(0,80),d:detail?String(detail).slice(0,120):'',x:Math.round(xp||0)});
+  if(S.log.length>500)S.log=S.log.slice(-500);
+}
+function addXP(n,label,detail){
   n=Math.round(n); if(n<=0)return;
   S.xp+=n;
   const today=dayStr(new Date()), y=new Date(); y.setDate(y.getDate()-1);
   if(S.last!==today){S.streak = S.last===dayStr(y) ? S.streak+1 : 1; S.last=today}
+  const r=touchDay(); r.xp+=n;
+  if(label)logAct(label,detail,n);
   save(); renderStats(); toast(`+${n} XP`);
 }
+/* đếm phút học: mỗi phút trang đang mở và có thao tác trong 2 phút gần nhất thì cộng 1 phút */
+let lastInput=Date.now();
+['pointerdown','keydown','touchstart','scroll'].forEach(ev=>W.addEventListener(ev,()=>{lastInput=Date.now()},{passive:true}));
+setInterval(()=>{if(document.visibilityState==='visible'&&Date.now()-lastInput<120000){const r=touchDay();r.min++;save()}},60000);
 function renderStats(){
   $('#sXp').textContent=S.xp; $('#sStreak').textContent=S.streak;
   $('#sKnown').textContent=ALLWORDS.filter(w=>box(w)>=3).length;
@@ -212,7 +232,7 @@ function showResult({title,score,correct,total,xp,replay,back,backLabel,bestKey,
   const [g,gl]=r>=.9?['优','Xuất sắc']:r>=.7?['良','Khá tốt']:r>=.5?['中','Đạt']:['加油','Cố lên nhé'];
   let best='';
   if(bestKey&&score!=null){const old=S.best[bestKey]||0;if(score>old){S.best[bestKey]=score;best=old?'Kỷ lục mới!':''}}
-  addXP(xp);
+  addXP(xp,title,`Bài ${S.unit} · đúng ${correct}/${total}${score!=null?" · "+score+" điểm":""}`);
   MAIN.innerHTML=`<div class="result">
     <div class="seal ${g.length>1?'long':''}">${g}</div><h2>${title}</h2><p class="gloss">${g} · ${gl} ${best?'· '+best:''}</p>
     <div class="rstats"><div><b>${correct}/${total}</b><small>đúng</small></div>${score!=null?`<div><b>${score}</b><small>điểm</small></div>`:''}<div><b>+${Math.round(xp)}</b><small>XP</small></div></div>
@@ -292,7 +312,7 @@ function unitSelect(onChange){
 /* ---------- router ---------- */
 const ROUTES={}, NAV=[
   ['home','Trang chủ'],['hoc','Học từ vựng'],['mua','Mưa từ vựng'],['viet','Luyện viết'],['pinyin','Pinyin'],
-  ['noi','Luyện nói'],['hoithoai','Hội thoại'],['nguphap','Ngữ pháp'],['bothu','Bộ thủ'],['thi','Thi thử']];
+  ['noi','Luyện nói'],['hoithoai','Hội thoại'],['nguphap','Ngữ pháp'],['bothu','Bộ thủ'],['thi','Thi thử'],['lichsu','Lịch sử']];
 function register(name,fn){ROUTES[name]=fn}
 function route(){
   cleanup(); stopListen(); if('speechSynthesis' in W)speechSynthesis.cancel();
@@ -320,8 +340,33 @@ const MODS=[
   ['hoithoai','话','Hội thoại','10 hội thoại theo tình huống, nghe từng câu và đóng vai.'],
   ['nguphap','语','Lượng từ & ngữ pháp','16 điểm ngữ pháp HSK 1, 20 lượng từ thông dụng, kèm bài tập.'],
   ['bothu','部','214 bộ thủ','Tra bộ thủ theo số nét, xem ví dụ trong từ HSK và chơi đoán nghĩa.'],
-  ['thi','考','Thi thử HSK 1','Đề mô phỏng 40 câu nghe và đọc, bấm giờ, chấm điểm, xem lại câu sai.']
+  ['thi','考','Thi thử HSK 1','Đề mô phỏng 40 câu nghe và đọc, bấm giờ, chấm điểm, xem lại câu sai.'],
+  ['lichsu','历','Lịch sử học','Lịch các ngày đã học, số phút, XP, từ mới mỗi ngày và nhật ký từng bài. Sao lưu tiến độ sang máy khác.'],
 ];
+function ago(t){
+  const m=Math.round((Date.now()-t)/60000);
+  if(m<1)return 'vừa xong'; if(m<60)return m+' phút trước';
+  const h=Math.round(m/60); if(h<24)return h+' giờ trước';
+  const d=Math.round(h/24); return d===1?'hôm qua':d+' ngày trước';
+}
+function helloBlock(){
+  if(!S.name) return `<form class="namebox" id="nameform"><label for="nm">Bạn tên là gì? Web sẽ chào bạn và lưu lịch sử học trên máy này.</label>
+    <div><input id="nm" maxlength="30" placeholder="Ví dụ: Thu Trang" autocomplete="given-name" value="${esc(S.oldName||'')}"><button class="btn primary sm" type="submit">Lưu tên</button></div></form>`;
+  const h=new Date().getHours(), hi=h<11?'Chào buổi sáng':h<14?'Chào buổi trưa':h<18?'Chào buổi chiều':'Chào buổi tối';
+  const r=(S.days||{})[dayStr(new Date())], y=new Date(); y.setDate(y.getDate()-1);
+  let line;
+  if(r&&r.xp>0) line=`Hôm nay bạn đã học ${r.min||0} phút, được ${r.xp} XP${r.k-r.k0>0?` và thuộc thêm ${r.k-r.k0} từ`:''}.`;
+  else if(S.streak>0&&S.last===dayStr(y)) line=`Học một chút hôm nay để giữ chuỗi ${S.streak} ngày nhé!`;
+  else line='Hôm nay mình học gì nào?';
+  const last=(S.log||[]).slice(-1)[0];
+  return `<div class="hello"><p class="hi">${hi}, <b>${esc(S.name)}</b>! <button class="linkbtn" id="rename" type="button">Đổi tên</button></p>
+    <p class="hl">${line}${last?` Lần trước: ${esc(last.a)} · ${ago(last.t)}. <a href="#lichsu">Xem lịch sử</a>`:''}</p></div>`;
+}
+function bindHello(root){
+  const f=$('#nameform');
+  if(f){f.onsubmit=e=>{e.preventDefault();const v=$('#nm').value.trim().slice(0,30);if(!v){$('#nm').focus();return}S.name=v;delete S.oldName;save();toast(`Chào ${v}!`);route()}}
+  const rn=$('#rename'); if(rn)rn.onclick=()=>{S.oldName=S.name;S.name='';save();route();const i=$('#nm');if(i){i.focus();i.select()}};
+}
 register('home',root=>{
   const w=ALLWORDS[Math.floor(Date.now()/864e5)%ALLWORDS.length];
   const u=unit(), known=ALLWORDS.filter(x=>box(x)>=3).length;
@@ -331,6 +376,7 @@ register('home',root=>{
     <div class="lanterns">${ART.LANTERNS||''}</div>
     <div class="coins">${ART.COINS||''}</div>
     <div class="hero-txt">
+      ${helloBlock()}
       <h1 class="display">Hán Ngữ<br>3.0</h1>
       <p class="sub">Nói được tiếng Trung với <span class="pill"><i></i>506 từ</span></p>
       <div class="cta"><a class="btn primary bigbtn" href="#hoc">${known?`Học tiếp bài ${u.n}`:'Bắt đầu học'}</a>
@@ -350,6 +396,7 @@ register('home',root=>{
     <div class="mods">${MODS.map(m=>`<a class="mod" href="#${m[0]}"><span class="ghz">${m[1]}</span><b>${m[2]}</b><small>${m[3]}</small>${m[4]?`<span class="tag">${m[4]}</span>`:''}</a>`).join('')}</div></div>
   </div>`;
   $('#wsay').onclick=e=>speak(w.h,false,e.currentTarget);
+  bindHello(root);
 });
 
 /* ---------- hình minh họa (emoji hiển thị bằng Twemoji, lỗi mạng thì hiện emoji của máy) ---------- */
@@ -360,7 +407,7 @@ function pic(h,size=64){
   return `<span class="pic" style="--ps:${size}px" aria-hidden="true">${e.map(x=>`<img src="https://cdn.jsdelivr.net/gh/jdecked/twemoji@15.1.0/assets/svg/${twCode(x)}.svg" alt="${x}" loading="lazy" draggable="false" onerror="this.replaceWith(document.createTextNode(this.alt))">`).join('')}</span>`;
 }
 
-W.App={UNITS,EMOJI,pic,ALLWORDS,ALLSENTS,S,save,$,$$,box,unit,addXP,renderStats,toast,rand,shuffle,sample,esc,toneOf,retone,baseSyl,pyHTML,pyPlain,pyKeys,
+W.App={UNITS,EMOJI,pic,dayStr,knownCount,ago,logAct,KEY,ALLWORDS,ALLSENTS,S,save,$,$$,box,unit,addXP,renderStats,toast,rand,shuffle,sample,esc,toneOf,retone,baseSyl,pyHTML,pyPlain,pyKeys,
   unitWords,unitSents,distract,mastery,ICON,speak,voiceWarn,voicePicker,bindPicker,listen,stopListen,SR,scoreSpeech,bestMatch,markHTML,recogWarn,strip,
   cleanup,setKey:f=>keyHandler=f,addTimer:t=>timers.push(t),setRaf:r=>raf=r,onCleanup:f=>cleanups.push(f),
   main,setMain,showResult,runMC,menu,listenBtns,bindListen,unitSelect,register,start,mkSent};

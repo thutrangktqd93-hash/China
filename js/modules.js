@@ -194,7 +194,7 @@ function writeView(root,pick){
         const m=sum.totalMistakes;
         $('#wmsg').innerHTML=`<b style="color:var(--ok)">Hoàn thành!</b> ${m?`Sai ${m} lần.`:'Không sai nét nào.'}`;
         speak(cur);
-        if(!S.wrote[cur]){S.wrote[cur]=true;save();A.addXP(outline?3:6);const c=$(`.chip[data-c="${cur}"]`);if(c)c.classList.add('done')}
+        if(!S.wrote[cur]){S.wrote[cur]=true;save();A.addXP(outline?3:6,"Luyện viết",`Viết đúng chữ ${cur}`);const c=$(`.chip[data-c="${cur}"]`);if(c)c.classList.add('done')}
       }});
   };
   $('#wanim').onclick=()=>{writer.cancelQuiz&&writer.cancelQuiz();writer.showOutline();$('#wmsg').textContent='Quan sát thứ tự các nét…';writer.animateCharacter({onComplete:()=>{$('#wmsg').textContent='Giờ bạn thử “Viết theo mẫu”.'}})};
@@ -308,7 +308,7 @@ async function recordItem(it,i,btn){
     const r=A.bestMatch(it.h,alts);
     $('#tg'+i).innerHTML=A.markHTML(r.a,r.ma);
     const old=S.speak[it.h]; if(old==null||r.score>old){S.speak[it.h]=r.score;save()}
-    if((old==null||old<80)&&r.score>=80)A.addXP(4);
+    if((old==null||old<80)&&r.score>=80)A.addXP(4,"Luyện nói",`${it.h} · ${r.score} điểm`);
     const verdict=r.score>=90?'Rất tốt!':r.score>=70?'Khá tốt':r.score>=40?'Cần luyện thêm':'Chưa đúng';
     out.innerHTML=`<b style="font-size:16px;color:${r.score>=70?'var(--ok)':'var(--cinnabar)'}">${r.score} điểm · ${verdict}</b> — máy nghe được: <span class="heard">${A.markHTML(r.b,r.mb)||'(trống)'}</span>`;
   }catch(e){

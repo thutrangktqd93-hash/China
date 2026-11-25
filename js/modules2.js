@@ -78,7 +78,7 @@ function examRun(root){
     });
     const s=Math.round((l+r)*2.5);
     S.exams=(S.exams||[]).concat({d:new Date().toLocaleString('vi-VN',{dateStyle:'short',timeStyle:'short'}),l,r,s}).slice(-30); save();
-    A.addXP(10+(l+r));
+    A.addXP(10+(l+r),"Thi thử HSK 1",`${s} điểm · Nghe ${l}/20 · Đọc ${r}/20`);
     const pass=s>=60;
     $('#eres').innerHTML=`<div class="result" style="margin-top:24px"><div class="seal ${pass?'':'long'}">${pass?'合格':'加油'}</div>
       <h2>${s} / 100 điểm</h2><p class="gloss">${timeout?'Hết giờ, bài đã được nộp. ':''}${pass?'Đạt yêu cầu':'Chưa đạt, cố lên nhé'}</p>
@@ -183,7 +183,7 @@ function dlgView(root,idx){
       $('#sc'+i).style.color=res.score>=70?'var(--ok)':'var(--cinnabar)';
     }
     hl(-1); running=false;
-    if(scores.length&&!stop){const avg=Math.round(scores.reduce((a,b)=>a+b,0)/scores.length);msg(`Hoàn thành vai ${r}: điểm trung bình <b>${avg}</b>.`);A.addXP(5+Math.round(avg/20))}
+    if(scores.length&&!stop){const avg=Math.round(scores.reduce((a,b)=>a+b,0)/scores.length);msg(`Hoàn thành vai ${r}: điểm trung bình <b>${avg}</b>.`);A.addXP(5+Math.round(avg/20),"Hội thoại: "+d.t,`Vai ${r} · ${avg} điểm`)}
   }
   $('#droleA').onclick=()=>rolePlay('A'); $('#droleB').onclick=()=>rolePlay('B');
   $('#dorder').onclick=()=>{const R=d.lines.filter(l=>l.tokens.length>1);A.orderGame(shuffle([...R]).slice(0,5),'Xếp câu · '+d.t,{back:()=>dlgView(root,idx),replay:()=>$('#dorder')&&dlgView(root,idx),bestKey:null,listenMode:true})};
