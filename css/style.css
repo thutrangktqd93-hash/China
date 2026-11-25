@@ -12,7 +12,7 @@
   --shadow:0 2px 4px rgba(180,70,63,.06),0 10px 28px rgba(180,70,63,.09);
   --f-body:"Raleway","Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",sans-serif;
   --f-display:"Josefin Sans","Raleway",system-ui,sans-serif;
-  --f-hz:"LXGW WenKai Screen","Kaiti SC","STKaiti","KaiTi",serif;
+  --f-hz:"Noto Sans SC","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
   color-scheme:light;
 }
 
@@ -29,8 +29,6 @@ button:focus-visible,input:focus-visible,a:focus-visible,select:focus-visible{ou
 .frame{position:relative;max-width:1280px;margin:22px auto;background:var(--paper);border:10px solid var(--frame);border-radius:40px;overflow-x:clip;box-shadow:0 20px 60px rgba(40,90,80,.18)}
 .wrap{max-width:1180px;margin:0 auto;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px))}
 .hz{font-family:var(--f-hz)}
-/* font Khải thể chỉ có 1 độ đậm: không cho trình duyệt tự tô đậm giả làm nhòe nét */
-*{font-synthesis-weight:none}
 kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 5px;color:var(--muted);background:var(--paper)}
 h2.sect{font-family:var(--f-display);font-weight:600;color:var(--deep);font-size:clamp(26px,3.6vw,36px);margin:0 0 6px;letter-spacing:.02em;text-wrap:balance}
 .lead{color:var(--muted);margin:0 0 18px;max-width:70ch}
@@ -81,7 +79,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .hcard{background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:22px;box-shadow:var(--shadow);min-width:0}
 .hcard p{color:var(--muted);margin:0 0 16px}
 .wod{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:4px}
-.wod .big{font-family:var(--f-hz);font-size:64px;font-weight:900;line-height:1.1}
+.wod .big{font-family:var(--f-hz);font-size:64px;font-weight:500;line-height:1.1}
 .mods{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
 .mod{position:relative;display:flex;flex-direction:column;gap:4px;text-decoration:none;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:16px;transition:border-color .15s,transform .15s,box-shadow .15s}
 .mod:hover{border-color:var(--coral1);transform:translateY(-3px);box-shadow:var(--shadow)}
@@ -181,7 +179,7 @@ select{font:inherit;color:var(--ink);background:var(--surface);border:1px solid 
 .fcard.flip .fin{transform:rotateY(180deg)}
 .face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:26px;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:24px;text-align:center}
 .face.back{transform:rotateY(180deg)}
-.face .big{font-family:var(--f-hz);font-size:84px;font-weight:700;line-height:1.1}
+.face .big{font-family:var(--f-hz);font-size:84px;font-weight:500;line-height:1.1}
 .face .vbig{font-size:26px;font-weight:700;text-wrap:balance}
 .face .py{font-size:24px}
 .face .hint{position:absolute;bottom:14px;font-size:12px;color:var(--muted)}
@@ -215,8 +213,8 @@ select{font:inherit;color:var(--ink);background:var(--surface);border:1px solid 
 .timer i{display:block;height:100%;width:100%;background:var(--jade);transform-origin:left}
 .timer i.low{background:var(--cinnabar)}
 .prompt{border:1px solid var(--line);background:var(--surface);border-radius:24px;padding:26px 20px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px;box-shadow:var(--shadow)}
-.prompt .big{font-family:var(--f-hz);font-size:68px;font-weight:700;line-height:1.1}
-.prompt .mid{font-family:var(--f-hz);font-size:30px;font-weight:700;line-height:1.3;text-wrap:balance}
+.prompt .big{font-family:var(--f-hz);font-size:68px;font-weight:500;line-height:1.1}
+.prompt .mid{font-family:var(--f-hz);font-size:30px;font-weight:500;line-height:1.3;text-wrap:balance}
 .prompt .vbig{font-size:24px;font-weight:700;text-wrap:balance}
 .prompt .q{font-size:13px;color:var(--muted)}
 .listenbtns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
