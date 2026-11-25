@@ -58,7 +58,7 @@ const CATS=[
 const find=id=>{for(const c of CATS){const x=c.items.find(i=>i.id===id);if(x)return x}return null};
 
 const SPEEDS=[['0.6','Chậm'],['0.8','Vừa'],['1','Bình thường']];
-const MODES=[['nghe','Nghe','Phát liền cả bài để làm quen.'],['nhai','Nhại theo','Sau mỗi câu web dừng lại để bạn nói đuổi theo.'],['cham','Chấm điểm','Sau mỗi câu bạn đọc vào micro, web chấm từng chữ.']];
+const MODES=[['nghe','Nghe','Phát liền cả bài để làm quen.'],['nhai','Nhại theo','Sau mỗi câu web dừng lại để bạn nói đuổi theo.'],['cham','Đọc & nhận diện','Sau mỗi câu bạn đọc vào micro, web hiện chữ trình duyệt nhận diện được và độ khớp (tham khảo, không phải điểm phát âm).']];
 function opt(){S.sh=Object.assign({cat:'doan',speed:'0.8',rep:1,mode:'nhai',py:true,vi:true,blind:false,best:{}},S.sh||{});return S.sh}
 
 A.register('shadow',root=>{A.setMain(root);const o=opt();o.open?player(root,o.open):library(root)});
@@ -70,7 +70,7 @@ function library(root){
   root.innerHTML=`<h2 class="sect">Shadowing</h2>
   <p class="lead">Shadowing là nghe người bản xứ nói rồi <b>nói đuổi theo ngay</b>, bắt chước cả thanh điệu lẫn nhịp câu. Cách luyện: nghe cả bài trước, rồi nhại theo từng câu, cuối cùng che chữ để nghe chay và tự chấm điểm.</p>
   <nav class="tabs" id="shcat">${CATS.map(c=>`<button class="tab ${c.k===cat.k?'on':''}" data-c="${c.k}">${c.name} <small>${c.items.length}</small></button>`).join('')}</nav>
-  <div class="dlist">${cat.items.map(it=>{const b=o.best[it.id];return `<button class="gcard" data-id="${it.id}"><span class="ghz">${esc(it.hz)}</span><b>${esc(it.t)}</b><small>${it.lines.length} câu</small>${b!=null?`<em>Điểm cao nhất: ${b}</em>`:''}</button>`}).join('')}</div>`;
+  <div class="dlist">${cat.items.map(it=>{const b=o.best[it.id];return `<button class="gcard" data-id="${it.id}"><span class="ghz">${esc(it.hz)}</span><b>${esc(it.t)}</b><small>${it.lines.length} câu</small>${b!=null?`<em>Khớp nhận diện cao nhất ${b}% (tham khảo)</em>`:''}</button>`}).join('')}</div>`;
   $$('#shcat .tab').forEach(b=>b.onclick=()=>{o.cat=b.dataset.c;save();library(root)});
   $$('[data-id]',root).forEach(b=>b.onclick=()=>player(root,b.dataset.id));
 }
@@ -91,7 +91,7 @@ function player(root,id){
     <div class="ctrl"><label><input type="checkbox" id="shpy" ${o.py?'checked':''}> Pinyin</label><label><input type="checkbox" id="shvi" ${o.vi?'checked':''}> Nghĩa</label><label><input type="checkbox" id="shbl" ${o.blind?'checked':''}> Nghe chay (che chữ Hán)</label></div>
   </div>
   <div class="note" id="shmsg">${MODES.find(m=>m[0]===o.mode)[2]} Chạm vào một câu để bắt đầu từ câu đó.</div>
-  ${o.mode==='cham'?A.recogWarn():''}
+  ${o.mode==='cham'?(A.SR?(A.speech.consentNeeded()?A.speech.consentHTML():A.speech.DISCLAIMER):`<div class="note warn">${A.speech.errorHelp('unsupported')}</div>`):''}
   <ol class="shlines ${o.py?'':'hidepy'} ${o.vi?'':'hidevi'} ${o.blind?'blind':''}" id="shl">${L.map((l,i)=>`<li class="shl" id="sl${i}" data-i="${i}">
     <span class="shn">${l.who?esc(l.who):i+1}</span>
     <div class="shtx"><span class="hz">${l.h}</span><span class="p">${esc(l.p)}</span><span class="m">${esc(l.m)}</span><span class="shsc" id="ss${i}"></span></div>
@@ -101,7 +101,7 @@ function player(root,id){
     <button class="btn primary" id="shgo" type="button">${ICON.play} Bắt đầu</button>
     <button class="btn sm" id="shnext" type="button" aria-label="Câu sau">⏭</button>
     <span class="shpos" id="shpos">Câu 1/${L.length}</span></div>`;
-  A.bindPicker();
+  A.bindPicker(); A.speech.bindConsent(()=>player(root,id));
   $('#shback').onclick=()=>{halt();library(root)};
   const re=()=>{halt();player(root,id)};
   $$('#shmode button').forEach(b=>b.onclick=()=>{o.mode=b.dataset.m;save();re()});
@@ -129,13 +129,14 @@ function player(root,id){
   }
   async function sayTimed(i){const t0=Date.now();await speak(L[i].h,rate());return Date.now()-t0}
   async function record(i){
+    if(A.speech.consentNeeded()){msg('Hãy bấm "Đồng ý, dùng micro" ở phía trên trước khi đọc.');halt();return null}
     msg(`<b>Đến lượt bạn.</b> Đọc: <span class="hz" style="font-weight:700">${L[i].h}</span>`);
     $('#sl'+i).classList.add('rec');
-    let alts=[]; try{alts=await A.listen()}catch(e){$('#sl'+i).classList.remove('rec');msg('Không dùng được micro ('+esc(e.message)+'). Hãy cho phép micro rồi thử lại.');return null}
+    let alts=[]; try{alts=await A.listen()}catch(e){$('#sl'+i).classList.remove('rec');msg(A.speech.errorHelp(e.message));return null}
     $('#sl'+i).classList.remove('rec');
     const r=A.bestMatch(L[i].h,alts); scores[i]=Math.max(scores[i]??0,r.score);
-    const el=$('#ss'+i); el.innerHTML=`<span class="mk">${A.markHTML(r.a,r.ma)}</span> ${r.score} điểm${alts[0]?` · máy nghe: ${esc(alts[0])}`:' · máy không nghe rõ'}`;
-    el.className='shsc '+(r.score>=80?'ok':r.score>=50?'mid':'bad');
+    const el=$('#ss'+i); el.innerHTML=alts.length?`<span class="mk">${A.markHTML(r.a,r.ma)}</span> Máy nhận diện: ${esc(alts[0])} · khớp ${r.score}% (tham khảo)`:'Máy chưa nhận diện được, hãy nghe lại câu mẫu';
+    el.className='shsc mid';
     return r.score;
   }
   async function playFrom(start){
@@ -157,11 +158,11 @@ function player(root,id){
     const done=scores.filter(x=>x!=null);
     const avg=done.length?Math.round(done.reduce((a,b)=>a+b,0)/done.length):null;
     let txt=`Xong cả bài! `;
-    if(avg!=null){const old=o.best[id];if(old==null||avg>old)o.best[id]=avg;txt+=`Điểm trung bình <b>${avg}</b>${old!=null&&avg>old?' · kỷ lục mới!':''}. `}
+    if(avg!=null){const old=o.best[id];if(old==null||avg>old)o.best[id]=avg;txt+=`Độ khớp nhận diện trung bình ${avg}% (tham khảo). `}
     txt+=o.mode==='nghe'?'Giờ chuyển sang “Nhại theo” để nói đuổi theo nhé.':o.blind?'Rất tốt, bạn đã nghe chay được cả bài.':'Thử bật “Nghe chay” để luyện khó hơn.';
     msg(txt);
-    const xp=o.mode==='nghe'?2:L.length*(o.mode==='cham'?2:1)+(avg!=null?Math.round(avg/20):0);
-    A.addXP(xp,'Shadowing: '+it.t,`${MODES.find(m=>m[0]===o.mode)[1]} · ${L.length} câu${avg!=null?' · '+avg+' điểm':''}`);
+    const xp=o.mode==='nghe'?2:L.length*(o.mode==='cham'?2:1);
+    A.addXP(xp,'Shadowing: '+it.t,`${MODES.find(m=>m[0]===o.mode)[1]} · ${L.length} câu`);
   }
   function halt(){run++;running=false;if('speechSynthesis' in window)speechSynthesis.cancel();A.stopListen();setGo()}
   function setGo(){const g=$('#shgo');if(g)g.innerHTML=running?'⏸ Dừng':`${ICON.play} ${cur>0&&cur<L.length?'Tiếp tục':'Bắt đầu'}`}

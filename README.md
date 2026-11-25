@@ -13,7 +13,7 @@ Web tự học tiếng Trung cho người mới bắt đầu, theo danh sách t�
 | Mưa từ vựng | Nghĩa tiếng Việt hoặc âm thanh rơi xuống, gõ pinyin để bắn hạ; gõ số thanh điệu để nhân đôi điểm, có trùm cuối mỗi cấp và bám đuổi từ yếu |
 | Luyện viết | Xem thứ tự nét và tự viết trên ô Mễ tự cách, báo nét sai (dùng thư viện Hanzi Writer) |
 | Pinyin | Thanh điệu, 23 thanh mẫu, 36 vận mẫu có âm thanh; luyện nghe thanh điệu và cặp âm dễ nhầm |
-| Luyện nói | Đọc to câu/từ, nhận dạng giọng nói và chấm điểm từng chữ |
+| Luyện nói | Đọc to câu/từ: hiện câu trình duyệt nhận diện được, từ nào chưa nhận diện và *độ khớp nhận diện văn bản (tham khảo)*, không phải điểm phát âm. Luyện phát âm thanh 1–4, cặp âm dễ nhầm, biến điệu (thanh 3, 不, 一) bằng ghi âm tự nghe lại (không lưu, không gửi đi) |
 | Hội thoại | 10 tình huống, nghe cả bài, đóng vai A/B có chấm điểm, luyện xếp câu |
 | Ngữ pháp | 16 điểm ngữ pháp HSK 1, 20 lượng từ, bài tập điền từ và sắp xếp câu |
 | Bộ thủ | 214 bộ thủ lọc theo số nét, ví dụ chữ HSK 1, trò chơi đoán nghĩa |
@@ -39,6 +39,7 @@ js/core.js         trạng thái, giọng nói, router, trang chủ
 js/curriculum.js   phiên bản chương trình, nguồn đối chiếu, metadata từ vựng
 js/srs.js          ôn tập cách quãng: lịch ôn, hàng đợi, chuyển dữ liệu cũ
 js/dashboard.js    trang chủ bảng điều khiển, lộ trình, ghi nhận lỗi và điểm yếu
+js/speech.js       giọng nói dùng chung: phản hồi nhận diện, quyền micro, ghi âm tự nghe lại
 js/hoc.js          học từ vựng theo bài
 js/modules.js      Mưa từ vựng, Luyện viết, Pinyin, Luyện nói
 js/modules2.js     Kiểm tra tổng hợp, Bộ thủ, Hội thoại, Ngữ pháp

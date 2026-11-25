@@ -627,3 +627,35 @@ select{font:inherit;color:var(--ink);background:var(--surface);border:1px solid 
 .wcardx .meta{margin:0}
 @media (max-width:900px){.tdgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:600px){.entry-opts .btn{width:100%}.tdcard{min-height:0}.nextcta .bigbtn{width:100%}}
+
+/* ---------- Luyện nói: phản hồi nhận diện, micro lớn, luyện phát âm ---------- */
+.micnote{border-color:var(--gold);background:var(--gold-soft);color:var(--ink);line-height:1.55}
+.sdisc{margin:0 0 12px;line-height:1.5}
+.mic.big{width:64px;height:64px;flex-direction:column;gap:0;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.mic.big svg{width:22px;height:22px}
+.mic.big:disabled{opacity:.4}
+.mic.rec{background:var(--deep)}
+.listening{color:var(--cinnabar);font-weight:600}
+.sres{min-width:0}
+.sfb{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:6px;display:flex;flex-direction:column;gap:6px}
+.sfb.empty{color:var(--ink)}
+.sfrow{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline}
+.sfl{font-size:12px;color:var(--muted);min-width:150px}
+.sfl i{font-style:normal;opacity:.8}
+.sfw{font-size:20px}
+.sfw .wok{color:var(--ok)} .sfw .wno{color:var(--cinnabar);text-decoration:underline wavy;text-underline-offset:4px}
+.sfp{font-size:16px;color:var(--ink)}
+.sfmiss{margin:0;font-size:13px;color:var(--ink)}
+.sfmiss.ok{color:var(--muted)}
+.prlist{display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
+.prow{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.prtx{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.prpart{display:flex;flex-direction:column;align-items:center;gap:2px;border:1px solid var(--line);background:var(--paper);border-radius:12px;padding:6px 12px;cursor:pointer;font:inherit;color:var(--ink)}
+.prpart .hz{font-size:22px}
+.prpart .py{font-size:13px;color:var(--muted)}
+.prpart.playing{border-color:var(--jade)}
+.practs{display:flex;flex-wrap:wrap;gap:8px}
+.practs .btn{min-height:40px}
+.recb.on{background:var(--cinnabar);color:#FFF;border-color:transparent}
+.prst{min-height:1em;margin:0}
+@media (max-width:600px){.sfl{min-width:0;width:100%}.practs .btn{flex:1 1 30%}}

@@ -225,7 +225,8 @@ function pinyinView(root,tab){
         <li>Hai thanh 3 đi liền: thanh 3 đầu đọc thành thanh 2. <span class="hz">你好</span> nǐ hǎo → ní hǎo.</li>
         <li><span class="hz">不</span> bù đứng trước thanh 4 đọc thành bú: <span class="hz">不是</span> bú shì.</li>
         <li><span class="hz">一</span> yī trước thanh 4 đọc yí (<span class="hz">一个</span> yí ge), trước thanh 1, 2, 3 đọc yì (<span class="hz">一起</span> yìqǐ).</li>
-        <li>Dấu thanh đặt trên nguyên âm chính theo thứ tự a → o → e → i, u, ü. Với iu và ui, dấu đặt trên chữ sau: liù, guì.</li></ul></div></div>`;
+        <li>Dấu thanh đặt trên nguyên âm chính theo thứ tự a → o → e → i, u, ü. Với iu và ui, dấu đặt trên chữ sau: liù, guì.</li></ul></div></div>
+      <div class="row l" style="margin-top:12px"><button class="btn sm" data-gospm="tone" type="button">Luyện nói 4 thanh</button><button class="btn sm" data-gospm="sandhi" type="button">Luyện nói biến điệu (thanh 3, 不, 一)</button></div>`;
   } else if(tab==='ini'||tab==='fin'){
     const groups=tab==='ini'?P.initials:P.finals;
     M.innerHTML=groups.map(g=>`<div class="pygroup"><h3>${g.g}</h3><div class="pygrid">${g.items.map(([l,h,p,tip])=>`<button class="pycell" data-h="${h}"><b>${l}</b><span class="ex"><span class="hz">${h}</span> ${p}</span><small>${tip}</small></button>`).join('')}</div></div>`).join('')
@@ -236,7 +237,9 @@ function pinyinView(root,tab){
       {k:'ppair',hz:'辨音',name:'Phân biệt âm dễ nhầm',d:'zh/z, ch/c, sh/s, j/q, b/p… nghe và chọn đúng pinyin.',run:pPair},
       {k:'pword',hz:'拼读',name:'Nghe chọn pinyin',d:'Nghe chữ HSK 1 và chọn cách ghi pinyin đúng trong 4 đáp án.',run:pWord}
     ]);
+    M.insertAdjacentHTML('beforeend',`<div class="row l" style="margin-top:14px"><button class="btn sm" data-gospm="pair" type="button">Luyện nói cặp âm dễ nhầm</button><button class="btn sm" data-gospm="tone" type="button">Luyện nói 4 thanh</button></div>`);
   }
+  $$('[data-gospm]',M).forEach(b=>b.onclick=()=>{S.spMode=b.dataset.gospm;save();location.hash='noi'});
   $$('[data-h]',M).forEach(b=>b.onclick=()=>speak(b.dataset.h,false,b));
   const back=()=>pinyinView(root,'prac');
   if(tab==='prac'&&A.takeAutorun){const ar=A.takeAutorun('pinyin');if(ar){const f={ptone:pTone,ppair:pPair,pword:pWord}[ar];if(f)return f()}}
@@ -272,51 +275,121 @@ function pinyinView(root,tab){
 /* =================================================================
    LUYỆN NÓI (nhận dạng giọng nói)
    ================================================================= */
+/* ================= Luyện nói & luyện phát âm =================
+   - Câu mẫu / Từ vựng: nghe mẫu → bấm micro đọc → xem độ khớp nhận diện văn bản (tham khảo), từ nào nhận diện được.
+   - Thanh điệu / Cặp âm / Biến điệu: nghe mẫu → ghi âm giọng mình → nghe lại xen kẽ với mẫu để tự so (không chấm điểm). */
+const SANDHI=[
+  {g:'Hai thanh 3 đi liền',rule:'Thanh 3 đứng trước thanh 3 đọc thành thanh 2.',items:[
+    ['你好','nǐ hǎo','ní hǎo','xin chào'],['很好','hěn hǎo','hén hǎo','rất tốt'],['可以','kě yǐ','ké yǐ','có thể'],
+    ['水果','shuǐ guǒ','shuí guǒ','hoa quả'],['我也','wǒ yě','wó yě','tôi cũng'],['很冷','hěn lěng','hén lěng','rất lạnh']]},
+  {g:'Biến điệu của 不',rule:'不 (bù) đứng trước thanh 4 đọc thành bú; trước thanh 1, 2, 3 vẫn đọc bù.',items:[
+    ['不是','bù shì','bú shì','không phải'],['不对','bù duì','bú duì','không đúng'],['不去','bù qù','bú qù','không đi'],
+    ['不好','bù hǎo','bù hǎo','không tốt'],['不来','bù lái','bù lái','không đến'],['不喝','bù hē','bù hē','không uống']]},
+  {g:'Biến điệu của 一',rule:'一 (yī) trước thanh 4 đọc yí; trước thanh 1, 2, 3 đọc yì; đứng một mình, cuối từ hoặc chỉ số thứ tự đọc yī.',items:[
+    ['一个','yī gè','yí ge','một cái'],['一下','yī xià','yí xià','một chút'],['一样','yī yàng','yí yàng','giống nhau'],
+    ['一天','yī tiān','yì tiān','một ngày'],['一年','yī nián','yì nián','một năm'],['一起','yī qǐ','yì qǐ','cùng nhau'],
+    ['十一','shí yī','shí yī','mười một'],['第一','dì yī','dì yī','thứ nhất']]},
+];
+const SP_MODES=[['sent','Câu mẫu'],['word','Từ vựng'],['tone','Thanh 1–4'],['pair','Cặp âm dễ nhầm'],['sandhi','Biến điệu']];
 A.register('noi',root=>{A.setMain(root);speakView(root)});
 function speakView(root){
-  A.cleanup();
-  const us=A.unitSelect(()=>speakView(root));
-  const mode=S.spMode||'sent';
-  const items=mode==='sent'?A.unitSents().map(s=>({h:s.h,p:s.p,m:s.m})):A.unitWords().map(w=>({h:w.h,p:pyPlain(w.p),m:w.m}));
-  const done=items.filter(it=>S.speak[it.h]!=null), avg=done.length?Math.round(done.reduce((a,it)=>a+S.speak[it.h],0)/done.length):0;
+  A.cleanup(); A.onCleanup(()=>{A.stopListen();A.speech.cleanupRec()});
+  const mode=SP_MODES.some(m=>m[0]===S.spMode)?S.spMode:'sent';
+  const pron=['tone','pair','sandhi'].includes(mode);
   root.innerHTML=`<h2 class="sect">Luyện nói</h2>
-  <p class="lead">Nghe mẫu, rồi bấm nút micro đỏ và đọc to. Máy sẽ nhận dạng câu bạn nói và tô xanh những chữ đọc đúng. Nói rõ từng chữ, không cần quá nhanh.</p>
-  ${A.recogWarn()}
+  <p class="lead">${pron?'Nghe mẫu, bấm <b>Ghi âm</b> và đọc theo, rồi bấm <b>So sánh</b> để nghe mẫu và giọng bạn liền nhau. Phần này không chấm điểm: tai bạn là người so sánh tốt nhất.':'Nghe mẫu, bấm nút micro và đọc to. Web hiện câu trình duyệt nhận diện được và những từ chưa nhận diện được để bạn biết cần nghe lại từ nào.'}</p>
+  <div class="ctrl"><div class="seg" id="spm">${SP_MODES.map(([k,l])=>`<button data-m="${k}" class="${mode===k?'on':''}">${l}</button>`).join('')}</div></div>
+  <div id="spbody"></div>`;
+  $$('#spm button').forEach(b=>b.onclick=()=>{S.spMode=b.dataset.m;save();speakView(root)});
+  const body=$('#spbody');
+  if(A.speech.consentNeeded()){body.innerHTML=A.speech.consentHTML();A.speech.bindConsent(()=>speakView(root));return}
+  if(pron)pronView(body,mode); else readView(body,mode,root);
+}
+
+/* ---------- đọc câu / từ: độ khớp nhận diện ---------- */
+function readView(body,mode,root){
+  const us=A.unitSelect(()=>speakView(root));
+  const items=mode==='sent'?A.unitSents().map(s=>({h:s.h,p:s.p,m:s.m,tokens:s.tokens})):A.unitWords().map(w=>({h:w.h,p:pyPlain(w.p),m:w.m,tokens:[w.h]}));
+  const done=items.filter(it=>S.speak[it.h]!=null).length;
+  body.innerHTML=`${A.SR?'':`<div class="note warn">${A.speech.errorHelp('unsupported')}</div>`}
   ${us.html}
-  <div class="ctrl"><div class="seg" id="spm"><button data-m="sent" class="${mode==='sent'?'on':''}">Câu mẫu</button><button data-m="word" class="${mode==='word'?'on':''}">Từ vựng</button></div>
-    <span>Đã luyện <b>${done.length}</b>/${items.length} · điểm trung bình <b>${avg}</b></span></div>
+  <p class="meta">Đã luyện <b>${done}</b>/${items.length} ${mode==='sent'?'câu':'từ'} trong phạm vi này.</p>
+  ${A.speech.DISCLAIMER}
   <div class="slist speaklist">${items.map((it,i)=>`<div class="srow" id="sr${i}">
     <button class="say" data-i="${i}" aria-label="Nghe mẫu">${ICON.spk}</button>
-    <span class="hz target" id="tg${i}">${esc(it.h)}</span>
-    <button class="mic" data-i="${i}" aria-label="Bấm để nói">${ICON.mic}</button>
+    <span class="hz target">${esc(it.h)}</span>
+    <button class="mic big" data-i="${i}" aria-label="Bấm để nói" ${A.SR?'':'disabled'}>${ICON.mic}<span>Nói</span></button>
     <span class="sp">${esc(it.p)} · ${esc(it.m)}</span>
-    <span class="sres" id="rs${i}">${S.speak[it.h]!=null?`Điểm cao nhất: <b>${S.speak[it.h]}</b>`:''}</span></div>`).join('')}</div>`;
+    <div class="sres" id="rs${i}" aria-live="polite">${S.speak[it.h]!=null?`<span class="meta">Đã luyện · độ khớp nhận diện cao nhất ${S.speak[it.h]}% (tham khảo)</span>`:''}</div></div>`).join('')}</div>`;
   us.bind();
-  $$('#spm button').forEach(b=>b.onclick=()=>{S.spMode=b.dataset.m;save();speakView(root)});
-  $$('.say',root).forEach(b=>b.onclick=()=>speak(items[b.dataset.i].h,false,b));
-  $$('.mic',root).forEach(b=>b.onclick=()=>recordItem(items[+b.dataset.i],+b.dataset.i,b));
+  $$('.say',body).forEach(b=>b.onclick=()=>speak(items[b.dataset.i].h,false,b));
+  $$('.mic',body).forEach(b=>b.onclick=()=>recordItem(items[+b.dataset.i],+b.dataset.i,b));
 }
 async function recordItem(it,i,btn){
   const out=$('#rs'+i);
-  if(!A.SR){out.innerHTML='<b style="color:var(--cinnabar)">Trình duyệt chưa hỗ trợ nhận dạng giọng nói.</b>';return}
+  if(!A.SR){out.innerHTML=`<div class="note warn">${A.speech.errorHelp('unsupported')}</div>`;return}
   if(btn.classList.contains('rec')){A.stopListen();return}
-  $$('.mic').forEach(m=>m.classList.remove('rec'));
-  btn.classList.add('rec'); out.innerHTML='Đang nghe… hãy đọc to. Chạm micro lần nữa để dừng.';
+  $$('.mic').forEach(m=>{m.classList.remove('rec');const s=m.querySelector('span');if(s)s.textContent='Nói'});
+  btn.classList.add('rec'); const lab=btn.querySelector('span'); if(lab)lab.textContent='Dừng';
+  out.innerHTML='<span class="listening">● Đang nghe… hãy đọc to. Bấm <b>Dừng</b> khi đọc xong.</span>';
   try{
     const alts=await A.listen();
-    btn.classList.remove('rec');
-    if(!alts.length){out.innerHTML='Không nghe thấy gì, bạn thử lại và nói to hơn nhé.';return}
-    const r=A.bestMatch(it.h,alts);
-    $('#tg'+i).innerHTML=A.markHTML(r.a,r.ma);
-    const old=S.speak[it.h]; if(old==null||r.score>old){S.speak[it.h]=r.score;save()}
-    if((old==null||old<80)&&r.score>=80)A.addXP(4,"Luyện nói",`${it.h} · ${r.score} điểm`);
-    const verdict=r.score>=90?'Rất tốt!':r.score>=70?'Khá tốt':r.score>=40?'Cần luyện thêm':'Chưa đúng';
-    out.innerHTML=`<b style="font-size:16px;color:${r.score>=70?'var(--ok)':'var(--cinnabar)'}">${r.score} điểm · ${verdict}</b> — máy nghe được: <span class="heard">${A.markHTML(r.b,r.mb)||'(trống)'}</span>`;
+    out.innerHTML=A.speech.feedbackHTML(it.h,it.tokens,alts)+`<div class="row l" style="margin-top:6px"><button class="btn sm" data-again="${i}" type="button">${ICON.spk} Nghe lại mẫu</button></div>`;
+    const ag=out.querySelector('[data-again]'); if(ag)ag.onclick=()=>speak(it.h,true,ag);
+    if(alts.length){
+      const r=A.bestMatch(it.h,alts);
+      const old=S.speak[it.h]; if(old==null||r.score>old)S.speak[it.h]=r.score;
+      save();
+      A.speech.credit('read',it.h,'Luyện nói',`Nghe mẫu và đọc lại: ${it.h}`);
+    }
   }catch(e){
-    btn.classList.remove('rec');
-    const msg={'not-allowed':'Bạn chưa cho phép dùng micro. Hãy bấm biểu tượng ổ khóa trên thanh địa chỉ và cho phép micro.','service-not-allowed':'Trình duyệt chặn dịch vụ nhận dạng giọng nói.','no-speech':'Không nghe thấy gì, thử lại nhé.','audio-capture':'Không tìm thấy micro.','network':'Nhận dạng giọng nói cần kết nối mạng.','unsupported':'Trình duyệt chưa hỗ trợ nhận dạng giọng nói.'}[e.message]||('Có lỗi: '+e.message);
-    out.innerHTML=`<b style="color:var(--cinnabar)">${msg}</b>`;
+    out.innerHTML=`<div class="note warn">${A.speech.errorHelp(e.message)}</div>`;
+  }finally{
+    btn.classList.remove('rec'); if(lab)lab.textContent='Nói';
   }
 }
 A.recordItem=recordItem;
+
+/* ---------- luyện phát âm: ghi âm và tự so sánh ---------- */
+function pronItems(mode){
+  if(mode==='tone')return P.sets.map((set,i)=>({key:'t'+i,title:`Bộ ${i+1}`,parts:set.map(([h,p])=>({h,show:p})),say:set.map(x=>x[0]).join('，')}));
+  if(mode==='pair')return P.contrasts.map((pair,i)=>({key:'p'+i,title:pair.map(x=>x[1]).join(' / '),parts:pair.map(([h,p])=>({h,show:p})),say:pair.map(x=>x[0]).join('，')}));
+  return SANDHI.flatMap((g,gi)=>g.items.map(([h,w,r,m],j)=>({key:`s${gi}-${j}`,group:gi,title:h,parts:[{h,show:w===r?w:`${w} → đọc ${r}`}],m,say:h})));
+}
+function pronView(body,mode){
+  const items=pronItems(mode);
+  const intro=mode==='tone'?'Mỗi bộ gồm một âm với 4 thanh. Nghe từng âm, rồi đọc cả 4 thanh theo thứ tự.'
+    :mode==='pair'?'Mỗi cặp chỉ khác một âm. Nghe kỹ sự khác nhau, đọc cả hai rồi so với mẫu.'
+    :'Pinyin trong sách ghi thanh gốc, nhưng khi nói thì thanh thay đổi theo quy tắc. Đọc theo cách đọc thực tế (sau dấu →).';
+  const groups=mode==='sandhi'?SANDHI.map((g,gi)=>`<div class="pygroup"><h3>${esc(g.g)}</h3><p class="meta">${esc(g.rule)}</p><div class="prlist">${items.filter(x=>x.group===gi).map(row).join('')}</div></div>`).join('')
+    :`<div class="prlist">${items.map(row).join('')}</div>`;
+  function row(it){return `<div class="prow" data-k="${it.key}">
+    <div class="prtx">${it.parts.map(p=>`<button class="prpart" data-h="${esc(p.h)}" type="button"><span class="hz">${esc(p.h)}</span><span class="py">${esc(p.show)}</span></button>`).join('')}${it.m?`<span class="meta">${esc(it.m)}</span>`:''}</div>
+    <div class="practs"><button class="btn sm" data-act="model" type="button">${ICON.spk} Nghe mẫu</button>
+      <button class="btn sm recb" data-act="rec" type="button" ${A.speech.CAN_REC?'':'disabled'}>${ICON.mic} Ghi âm</button>
+      <button class="btn sm" data-act="cmp" type="button" disabled>So sánh</button></div>
+    <div class="prst meta" aria-live="polite"></div></div>`}
+  body.innerHTML=`<p class="meta">${intro}</p>
+    ${A.speech.CAN_REC?'':`<div class="note warn">Trình duyệt này không ghi âm được. Bạn vẫn có thể nghe mẫu và đọc theo.</div>`}
+    <p class="meta sdisc">Bản ghi chỉ nằm trong trang này để bạn tự nghe lại, không được lưu hay gửi đi. Web không có công nghệ phân tích cao độ nên không chấm thanh điệu ở phần này.</p>
+    ${groups}`;
+  const recs={};
+  $$('.prpart',body).forEach(b=>b.onclick=()=>speak(b.dataset.h,true,b));
+  $$('.prow',body).forEach(r=>{
+    const it=items.find(x=>x.key===r.dataset.k), st=r.querySelector('.prst'), rb=r.querySelector('[data-act="rec"]'), cb=r.querySelector('[data-act="cmp"]');
+    r.querySelector('[data-act="model"]').onclick=e=>speak(it.say,true,e.currentTarget);
+    rb.onclick=async()=>{
+      if(A.speech.recording()){
+        const u=await A.speech.recStop(); rb.innerHTML=`${ICON.mic} Ghi lại`; rb.classList.remove('on');
+        if(u){recs[it.key]=u; cb.disabled=false; st.textContent='Đã ghi. Bấm "So sánh" để nghe mẫu rồi giọng bạn.';
+          A.speech.credit('pron',it.key,'Luyện phát âm',`${{tone:'Thanh điệu',pair:'Cặp âm',sandhi:'Biến điệu'}[mode]}: ${it.title}`)}
+        return;
+      }
+      $$('.recb.on',body).forEach(x=>x.click());
+      try{await A.speech.recStart(); rb.innerHTML='■ Dừng ghi'; rb.classList.add('on'); st.innerHTML='<span class="listening">● Đang ghi âm… đọc theo mẫu rồi bấm Dừng ghi.</span>'}
+      catch(e){st.innerHTML=`<span style="color:var(--cinnabar)">${A.speech.errorHelp(e.name||e.code||e.message)}</span>`}
+    };
+    cb.onclick=async()=>{cb.disabled=true;st.textContent='Mẫu…';await speak(it.say,true);st.textContent='Giọng bạn…';await A.speech.playUrl(recs[it.key]);st.textContent='Nghe lại nhiều lần và chú ý chỗ khác nhau về thanh điệu.';cb.disabled=false};
+  });
+}
 })();

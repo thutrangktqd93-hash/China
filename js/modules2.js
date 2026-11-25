@@ -147,7 +147,7 @@ function dlgView(root,idx){
   A.cleanup(); S.dlg=idx; save();
   const d=DLG[idx]; let role=null, running=false;
   root.innerHTML=`<h2 class="sect">Hội thoại</h2>
-  <p class="lead">Chọn một tình huống, nghe cả đoạn rồi đóng vai một người. Đến lượt bạn, bấm micro và đọc câu của mình, máy sẽ chấm điểm.</p>
+  <p class="lead">Chọn một tình huống, nghe cả đoạn rồi đóng vai một người. Đến lượt bạn, đọc câu của mình vào micro; web hiện chữ trình duyệt nhận diện được và độ khớp nhận diện văn bản (chỉ để tham khảo, không phải điểm phát âm).</p>
   ${A.voicePicker()}
   <div class="dlist">${DLG.map((x,i)=>`<button class="gcard" data-d="${i}" style="${i===idx?'border-color:var(--jade);background:var(--jade-soft)':''}"><span class="ghz">${x.hz}</span><b>${i+1}. ${esc(x.t)}</b><small>${x.lines.length} câu</small></button>`).join('')}</div>
   <div class="ctrl"><button class="btn primary sm" id="dplay">${ICON.play} Nghe cả bài</button><button class="btn sm" id="droleA">Đóng vai A</button><button class="btn sm" id="droleB">Đóng vai B</button><button class="btn sm" id="dorder">Luyện xếp câu</button>
@@ -170,20 +170,21 @@ function dlgView(root,idx){
   $('#dplay').onclick=()=>{if(running){stop=true;speechSynthesis.cancel();A.stopListen();running=false;hl(-1);msg('Đã dừng.')}else playAll()};
   async function rolePlay(r){
     if(running){stop=true;speechSynthesis.cancel();A.stopListen();await new Promise(x=>setTimeout(x,200))}
-    if(!A.SR){msg(A.recogWarn());return}
+    if(!A.SR){msg(A.speech.errorHelp('unsupported'));return}
+    if(A.speech.consentNeeded()){msg(A.speech.consentHTML());A.speech.bindConsent(()=>rolePlay(r));return}
     role=r; running=true; stop=false; const scores=[];
     $$('.bub',root).forEach(b=>b.classList.toggle('mine',b.classList.contains(r)));
     for(let i=0;i<d.lines.length&&!stop;i++){
       const l=d.lines[i]; hl(i); $('#b'+i).scrollIntoView({block:'nearest'});
       if(l.who!==r){msg(`Người ${l.who} đang nói…`);await speak(l.h);await new Promise(x=>setTimeout(x,300));continue}
       msg(`<b>Đến lượt bạn.</b> Hãy đọc: <span class="hz" style="font-weight:700">${l.h}</span>`);
-      let alts=[]; try{alts=await A.listen()}catch(e){msg('Không dùng được micro: '+esc(e.message)+'. Hãy cho phép micro rồi thử lại.');break}
+      let alts=[]; try{alts=await A.listen()}catch(e){msg(A.speech.errorHelp(e.message));break}
       const res=A.bestMatch(l.h,alts); scores.push(res.score);
-      $('#sc'+i).textContent=`${res.score} điểm · máy nghe: ${alts[0]||'(trống)'}`;
-      $('#sc'+i).style.color=res.score>=70?'var(--ok)':'var(--cinnabar)';
+      $('#sc'+i).textContent=alts.length?`Máy nhận diện: ${alts[0]} · khớp ${res.score}% (tham khảo)`:'Máy chưa nhận diện được, hãy nghe lại mẫu';
+      $('#sc'+i).style.color='var(--muted)';
     }
     hl(-1); running=false;
-    if(scores.length&&!stop){const avg=Math.round(scores.reduce((a,b)=>a+b,0)/scores.length);msg(`Hoàn thành vai ${r}: điểm trung bình <b>${avg}</b>.`);A.addXP(5+Math.round(avg/20),"Hội thoại: "+d.t,`Vai ${r} · ${avg} điểm`)}
+    if(scores.length&&!stop){const avg=Math.round(scores.reduce((a,b)=>a+b,0)/scores.length);msg(`Hoàn thành vai ${r}. Độ khớp nhận diện trung bình ${avg}% (tham khảo). Hãy nghe lại những câu máy chưa nhận diện đủ.`);A.addXP(5+scores.length,"Hội thoại: "+d.t,`Đóng vai ${r} · ${scores.length} câu`)}
   }
   $('#droleA').onclick=()=>rolePlay('A'); $('#droleB').onclick=()=>rolePlay('B');
   $('#dorder').onclick=()=>{const R=d.lines.filter(l=>l.tokens.length>1);A.orderGame(shuffle([...R]).slice(0,5),'Xếp câu · '+d.t,{back:()=>dlgView(root,idx),replay:()=>$('#dorder')&&dlgView(root,idx),bestKey:null,listenMode:true})};
