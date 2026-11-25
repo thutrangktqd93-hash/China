@@ -244,6 +244,7 @@ function showResult({title,score,correct,total,xp,replay,back,backLabel,bestKey,
   const [g,gl]=r>=.9?['优','Xuất sắc']:r>=.7?['良','Khá tốt']:r>=.5?['中','Đạt']:['加油','Cố lên nhé'];
   let best='';
   if(bestKey&&score!=null){const old=S.best[bestKey]||0;if(score>old){S.best[bestKey]=score;best=old?'Kỷ lục mới!':''}}
+  if(bestKey){if(!S.done||typeof S.done!=='object')S.done={};S.done[bestKey]=(S.done[bestKey]||0)+1}
   addXP(xp,title,`Bài ${S.unit} · đúng ${correct}/${total}${score!=null?" · "+score+" điểm":""}`);
   MAIN.innerHTML=`<div class="result">
     <div class="seal ${g.length>1?'long':''}">${g}</div><h2>${title}</h2><p class="gloss">${g} · ${gl} ${best?'· '+best:''}</p>
@@ -282,6 +283,7 @@ function runMC(cfg){
   function pick(k){
     if(locked)return; locked=true; cancelAnimationFrame(raf); answered++;
     const r=R[i], ok=k>=0&&r.options[k].ok;
+    if(W.App.track)try{W.App.track(cfg,r,k,ok)}catch(e){}
     $$('.opt',MAIN).forEach((b,j)=>{b.disabled=true;if(r.options[j].ok)b.classList.add('ok');else if(j===k)b.classList.add('bad')});
     if(ok){combo++;correct++;let g=10+Math.min(combo-1,5)*2;
       if(cfg.timed)g+=Math.round(Math.max(0,1-(performance.now()-r._t0)/(cfg.timed*1000))*10);
@@ -404,7 +406,7 @@ function curBlock(){
 register('home',root=>{
   const w=ALLWORDS[Math.floor(Date.now()/864e5)%ALLWORDS.length];
   const u=unit(), known=ALLWORDS.filter(x=>box(x)>=3).length;
-  const ART=W.ART||{};
+  const ART=W.ART||{}, D=W.App.dash;
   root.innerHTML=`<section class="hero2">
     <div class="water" aria-hidden="true">你</div>
     <div class="lanterns">${ART.LANTERNS||''}</div>
@@ -413,16 +415,18 @@ register('home',root=>{
       ${helloBlock()}
       <h1 class="display">Hán Ngữ<br>3.0</h1>
       <p class="sub">Nói được tiếng Trung với <span class="pill"><i></i>${ALLWORDS.length} từ</span></p>
-      <div class="cta"><a class="btn primary bigbtn" href="#hoc">${known?`Học tiếp bài ${u.n}`:'Bắt đầu học'}</a>
+      ${D?D.ctaBlock():`      <div class="cta"><a class="btn primary bigbtn" href="#hoc">${known?`Học tiếp bài ${u.n}`:'Bắt đầu học'}</a>
         <p class="cta-note">Học miễn phí theo danh sách từ HSK 3.0 – GF0025-2021, không cần đăng ký tài khoản.</p></div>
       <div class="hstats">
         <div><small>Chưa thuộc</small><span class="old">${ALLWORDS.length-known} từ</span></div>
         <span class="badge">${Math.round(known/ALLWORDS.length*100)}%</span>
         <div><small>Đã nhớ</small><span class="now">${known} từ</span></div>
       </div>
+`}
     </div>
     <div class="hero-art">${ART.PANDA||''}</div>
   </section>
+  ${D?D.todayBlock()+D.overviewBlock()+D.pathBlock()+D.weakBlock():''}
   ${curBlock()}
   <div class="home-row">
     <div class="hcard wod"><p class="eyebrow">Từ của hôm nay</p>${pic(w.h,56)}<div class="big">${w.h}</div>${pyHTML(w.p)}<div>${esc(w.m)}</div>
@@ -432,6 +436,7 @@ register('home',root=>{
   </div>`;
   $('#wsay').onclick=e=>speak(w.h,false,e.currentTarget);
   bindHello(root);
+  if(D)D.bind(root);
 });
 
 /* ---------- hình minh họa (emoji hiển thị bằng Twemoji, lỗi mạng thì hiện emoji của máy) ---------- */

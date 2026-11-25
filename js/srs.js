@@ -123,8 +123,13 @@ function preview(h,t=Date.now()){
    scope 'unit': từ của bài đang chọn (hoặc bài 1 → bài hiện tại nếu bật "Ôn cả từ của các bài trước").
    scope 'all' : ôn mọi từ đến hạn; từ mới chỉ lấy từ bài 1 → bài hiện tại, không lấy bài chưa học.
    Thứ tự: quá hạn (lâu nhất trước) → đến hạn → học lại → từ mới (theo thứ tự trong bài). */
+function weakWords(limit=20){
+  return ALLWORDS.filter(w=>{const c=S.review[w.h];return c&&((c.lapses||0)+(c.flagged||0))>0})
+    .sort((a,b)=>{const x=S.review[a.h],y=S.review[b.h];return ((y.lapses||0)+(y.flagged||0))-((x.lapses||0)+(x.flagged||0))}).slice(0,limit);
+}
 function scopeWords(scope){
   if(scope==='all')return ALLWORDS;
+  if(scope==='weak')return weakWords();
   return A.unitWords();
 }
 function newPool(scope){
@@ -133,6 +138,7 @@ function newPool(scope){
 }
 function queue(scope,opt={}){
   const t=Date.now(), words=scopeWords(scope);
+  if(scope==='weak'){const ws=weakWords();return {items:ws.map(w=>({w,kind:status(w.h,t)})),dueCount:ws.length,newCount:0,newLeft:newLeft(opt.extraNew||0),weak:true}}
   const tagged=words.map(w=>({w,s:status(w.h,t),due:(S.review[w.h]||{}).dueAt||0}));
   const order={overdue:0,due:1,'learning-due':2};
   const dueList=tagged.filter(x=>isDue(x.s)).sort((a,b)=>order[a.s]-order[b.s]||a.due-b.due).map(x=>({w:x.w,kind:x.s}));
@@ -171,5 +177,5 @@ function migrate(){
 }
 migrate();
 
-A.srs={SCHEMA,RATINGS,STATUS_TEXT,schedule,status,isDue,overdueDays,rate,flag,preview,queue,counts,upcoming,newPerDay,newLeft,today,migrate,boxFrom,card,dueInDays};
+A.srs={SCHEMA,RATINGS,STATUS_TEXT,schedule,status,isDue,overdueDays,rate,flag,preview,queue,counts,upcoming,weakWords,newPerDay,newLeft,today,migrate,boxFrom,card,dueInDays};
 })();

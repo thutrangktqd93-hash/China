@@ -27,6 +27,12 @@ function mergeState(L,R){
     /* mức nhớ cũ (S.box) của từ đã được đánh giá SRS đi theo lịch ôn, không lấy mức cao nhất */
     if(A.srs)for(const [h,c] of Object.entries(rv))if((c.totalReviews||0)>0)o.box[h]=A.srs.boxFrom(c);
   }
+  /* số liệu lộ trình và điểm yếu: bộ đếm lấy giá trị lớn nhất, đánh dấu thì hợp lại */
+  if(L.done||R.done)o.done=maxMap(L.done,R.done);
+  if(L.stats||R.stats)o.stats=maxMap(L.stats,R.stats);
+  if(L.pyDone||R.pyDone)o.pyDone={...(R.pyDone||{}),...(L.pyDone||{})};
+  if(L.skipSteps||R.skipSteps)o.skipSteps={...(R.skipSteps||{}),...(L.skipSteps||{})};
+  o.track=L.track||R.track||'';
   o.schemaVersion=Math.max(+L.schemaVersion||1,+R.schemaVersion||1);
   if(L.srsDay||R.srsDay){const a=L.srsDay||{d:'',n:0},b=R.srsDay||{d:'',n:0};o.srsDay=a.d===b.d?{d:a.d,n:Math.max(a.n,b.n)}:(a.d>b.d?a:b)}
   if(L.sh||R.sh)o.sh={...(R.sh||{}),...(L.sh||{}),best:maxMap((L.sh||{}).best,(R.sh||{}).best)};

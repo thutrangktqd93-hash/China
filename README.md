@@ -8,6 +8,7 @@ Web tự học tiếng Trung cho người mới bắt đầu, theo danh sách t�
 
 | Mục | Nội dung |
 |---|---|
+| Trang chủ | Bảng điều khiển học tập: chọn điểm bắt đầu (chưa biết gì / đã biết pinyin), nút “Bắt đầu bài học tiếp theo”, việc cần làm hôm nay, tổng quan tiến độ, lộ trình 7 chặng nối các mô-đun sẵn có, điểm cần cải thiện (từ hay quên, thanh điệu, cặp âm, câu nghe sai, bài sai nhiều) |
 | Học từ vựng | 506 từ chia 22 bài theo chủ đề, thẻ từ có pinyin tô màu thanh điệu, câu mẫu, flashcard ôn tập cách quãng (SRS: 4 mức Quên/Khó/Tốt/Rất dễ, hàng đợi từ quá hạn → đến hạn → từ mới, mặc định 10 từ mới/ngày), 3 game (Ghép cặp, Thử thách tốc độ, Bắt thanh điệu) và 3 bài luyện nghe |
 | Mưa từ vựng | Nghĩa tiếng Việt hoặc âm thanh rơi xuống, gõ pinyin để bắn hạ; gõ số thanh điệu để nhân đôi điểm, có trùm cuối mỗi cấp và bám đuổi từ yếu |
 | Luyện viết | Xem thứ tự nét và tự viết trên ô Mễ tự cách, báo nét sai (dùng thư viện Hanzi Writer) |
@@ -37,6 +38,7 @@ js/data-extra.js   pinyin, 214 bộ thủ, lượng từ, ngữ pháp, hội tho
 js/core.js         trạng thái, giọng nói, router, trang chủ
 js/curriculum.js   phiên bản chương trình, nguồn đối chiếu, metadata từ vựng
 js/srs.js          ôn tập cách quãng: lịch ôn, hàng đợi, chuyển dữ liệu cũ
+js/dashboard.js    trang chủ bảng điều khiển, lộ trình, ghi nhận lỗi và điểm yếu
 js/hoc.js          học từ vựng theo bài
 js/modules.js      Mưa từ vựng, Luyện viết, Pinyin, Luyện nói
 js/modules2.js     Kiểm tra tổng hợp, Bộ thủ, Hội thoại, Ngữ pháp

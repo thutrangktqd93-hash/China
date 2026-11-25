@@ -59,9 +59,9 @@ function exampleFor(w){
   return inUnit.find(s=>s.tokens.includes(w.h))||ALLSENTS.find(s=>s.tokens.includes(w.h))||null;
 }
 function flashHead(scope){
-  const R=A.srs, c=R.counts(scope==='all'?A.ALLWORDS:A.unitWords());
+  const R=A.srs, c=R.counts(scope==='all'?A.ALLWORDS:scope==='weak'?R.weakWords():A.unitWords());
   return `<div class="frow">
-      <div class="seg" id="fscope"><button data-sc="unit" class="${scope==='unit'?'on':''}">${S.prev&&S.unit>1?`Bài 1–${S.unit}`:`Bài ${S.unit}`}</button><button data-sc="all" class="${scope==='all'?'on':''}">Ôn tổng hợp</button></div>
+      <div class="seg" id="fscope"><button data-sc="unit" class="${scope==='unit'?'on':''}">${S.prev&&S.unit>1?`Bài 1–${S.unit}`:`Bài ${S.unit}`}</button><button data-sc="all" class="${scope==='all'?'on':''}">Ôn tổng hợp</button>${R.weakWords().length?`<button data-sc="weak" class="${scope==='weak'?'on':''}">Từ hay quên</button>`:''}</div>
       <label class="fnew">Từ mới/ngày <input type="number" id="fnpd" min="0" max="50" step="1" value="${R.newPerDay()}" inputmode="numeric"></label></div>
     <div class="srsbar" aria-label="Tình trạng ghi nhớ">
       <span class="sb-over" title="Quá hạn ôn"><b>${c.overdue}</b> quá hạn</span>
@@ -77,7 +77,7 @@ function bindFlashHead(){
 }
 function startFlash(extraNew){
   A.cleanup();
-  const R=A.srs, scope=S.fscope==='all'?'all':'unit';
+  const R=A.srs, scope=['all','weak'].includes(S.fscope)?S.fscope:'unit';
   const Q=R.queue(scope,{extraNew:extraNew||0});
   if(!Q.items.length)return flashEmpty(scope,Q);
   const q=Q.items.map(x=>({w:x.w,kind:x.kind,again:0}));
@@ -143,7 +143,7 @@ function startFlash(extraNew){
   face();
 }
 function flashEmpty(scope,Q){
-  const R=A.srs, pool=scope==='all'?A.ALLWORDS:A.unitWords(), c=R.counts(pool);
+  const R=A.srs, pool=scope==='all'?A.ALLWORDS:scope==='weak'?R.weakWords():A.unitWords(), c=R.counts(pool);
   const nextDue=Object.entries(S.review||{}).filter(([h,x])=>x.dueAt&&x.dueAt>Date.now()&&pool.some(w=>w.h===h)).map(([,x])=>x.dueAt).sort((a,b)=>a-b)[0];
   const remainingNew=c.new;
   HM.innerHTML=`<div class="flash">${flashHead(scope)}
@@ -166,7 +166,7 @@ const GAMES=[
   {k:'tone',hz:'声调',name:'Bắt thanh điệu',d:'Chọn cách viết pinyin đúng thanh điệu, luyện phân biệt mā má mǎ mà.',run:gTone},
 ];
 function poolNote(){return `<p class="note">Từ dùng: <b>${S.prev&&S.unit>1?`bài 1 đến bài ${S.unit}`:`bài ${S.unit}`}</b> (${A.unitWords().length} từ). Bật “Ôn cả từ của các bài trước” ở cột bên trái để trộn từ cũ. Muốn chơi kiểu gõ pinyin, thử <a href="#mua">Mưa từ vựng</a>.</p>`}
-function renderGames(){A.menu(HM,GAMES,poolNote())}
+function renderGames(){const ar=A.takeAutorun&&A.takeAutorun('game');if(ar){const g=GAMES.find(x=>x.k===ar);if(g)return g.run()}A.menu(HM,GAMES,poolNote())}
 const backGames=toTab('game'), backListen=toTab('listen');
 
 function gMatch(){
@@ -222,7 +222,7 @@ function gTone(){
   const pool=A.unitWords().filter(w=>w.p.split(' ').some(toneOf));
   const rounds=sample(pool,Math.min(8,pool.length)).map(w=>({word:w,
     prompt:`<div class="q">Pinyin đúng của</div><div class="big">${w.h}</div><div class="q">${esc(w.m)}</div>`,
-    options:toneOptions(w).map(o=>({ok:o.ok,html:pyHTML(o.p)})), reveal:`Nghe lại: <b>${pyPlain(w.p)}</b>`, after:()=>speak(w.h)}));
+    options:toneOptions(w).map(o=>({ok:o.ok,p:o.p,html:pyHTML(o.p)})), reveal:`Nghe lại: <b>${pyPlain(w.p)}</b>`, after:()=>speak(w.h)}));
   A.runMC({key:'tone',title:'Bắt thanh điệu',rounds,replay:gTone,back:backGames,backLabel:'Chọn trò khác'});
 }
 
@@ -233,6 +233,7 @@ const LISTEN=[
   {k:'lorder',hz:'排序',name:'Nghe và xếp câu',d:'Nghe câu rồi sắp xếp các từ theo đúng thứ tự.',run:lOrder},
 ];
 function renderListen(){
+  const ar=A.takeAutorun&&A.takeAutorun('listen');if(ar){const g=LISTEN.find(x=>x.k===ar);if(g)return g.run()}
   const rates=[[0.6,'Chậm'],[0.85,'Vừa'],[1,'Nhanh']];
   A.menu(HM,LISTEN,`${A.voicePicker()}<div class="ctrl"><span>Tốc độ đọc</span><div class="seg" id="rate">${rates.map(([v,l])=>`<button data-r="${v}" class="${S.rate===v?'on':''}">${l}</button>`).join('')}</div></div>`);
   A.bindPicker();
@@ -253,7 +254,7 @@ function lSent(){
   const base=[...shuffle([...unit().sents]),...shuffle(own.filter(s=>s.U!==S.unit))].slice(0,6);
   const rounds=base.map(s=>{
     const ds=shuffle(all.filter(x=>x.m!==s.m)).slice(0,3);
-    return {prompt:`<div class="q">Câu bạn vừa nghe có nghĩa là gì?</div>${A.listenBtns()}`, cols:'one',
+    return {sent:s,prompt:`<div class="q">Câu bạn vừa nghe có nghĩa là gì?</div>${A.listenBtns()}`, cols:'one',
       options:shuffle([{s,ok:true},...ds.map(d=>({s:d,ok:false}))]).map(o=>({ok:o.ok,html:esc(o.s.m)})),
       onShow:()=>A.bindListen(s.h), reveal:`<span class="hz" style="font-weight:700">${s.h}</span> <span style="color:var(--muted)">${esc(s.p)}</span>`};
   });
@@ -282,6 +283,7 @@ function orderGame(R,title,{back,replay,bestKey,listenMode=true}){
       if(checked){i++; if(i>=R.length)return A.showResult({title,score,correct,total:R.length,xp:score/4+3,replay,back,backLabel:'Chọn bài khác',bestKey}); return show()}
       if(picked.length!==bank.length)return;
       checked=true; const ok=picked.map(j=>bank[j].t).join('')===s.tokens.join('');
+      if(A.track)try{A.track({key:'order'},{sent:s},-1,ok)}catch(e){}
       if(ok){correct++;score+=20}
       ans.classList.add(ok?'ok':'bad'); if(!ok)ans.classList.add('shake');
       $('#fb').innerHTML=`<div class="msg">${ok?'<b class="ok">Chính xác!</b>':'<b class="bad">Chưa đúng.</b> Đáp án:'} <span class="hz" style="font-weight:700">${s.h}</span><br><span style="color:var(--muted)">${esc(s.p)} · ${esc(s.m)}</span></div>
