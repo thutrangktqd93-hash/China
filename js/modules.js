@@ -212,10 +212,10 @@ function pinyinView(root,tab){
   A.cleanup(); S.pyTab=tab; save();
   root.innerHTML=`<h2 class="sect">Lộ trình Pinyin</h2>
   <p class="lead">Pinyin là cách ghi âm tiếng Trung bằng chữ Latin, gồm thanh mẫu (phụ âm đầu), vận mẫu (vần) và thanh điệu. Học theo thứ tự từ trái sang phải, chạm vào ô nào để nghe ví dụ.</p>
-  ${A.voiceWarn()}
+  ${A.voicePicker()}
   <nav class="tabs" id="ptabs">${[['tone','1. Thanh điệu'],['ini','2. Thanh mẫu'],['fin','3. Vận mẫu'],['prac','4. Luyện nghe']].map(([k,l])=>`<button class="tab ${k===tab?'on':''}" data-t="${k}">${l}</button>`).join('')}</nav>
   <div id="pmain"></div>`;
-  $('#ptabs').onclick=e=>{const b=e.target.closest('.tab');if(b)pinyinView(root,b.dataset.t)};
+  $('#ptabs').onclick=e=>{const b=e.target.closest('.tab');if(b)pinyinView(root,b.dataset.t)}; A.bindPicker();
   const M=$('#pmain'); A.setMain(M);
   if(tab==='tone'){
     M.innerHTML=`<div class="tgrid">${P.tones.map(t=>`<div class="tcard"><span class="tm t${t.t}">${t.mark}</span><b>${t.name} <span class="meta">${t.shape}</span></b><p>${t.tip}</p>

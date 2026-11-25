@@ -11,7 +11,7 @@ function examHome(root){
   const hist=(S.exams||[]).slice(-8).reverse();
   root.innerHTML=`<h2 class="sect">Thi thử HSK 1</h2>
   <p class="lead">Đề mô phỏng 40 câu, mỗi lần làm sẽ ra đề mới từ 506 từ HSK 3.0 cấp 1. Làm trong 30 phút, nộp bài để xem điểm và giải thích câu sai. Đây là đề luyện tập, không phải đề thi chính thức.</p>
-  ${A.voiceWarn()}
+  ${A.voicePicker()}
   <div class="tgrid" style="margin-bottom:18px">
     <div class="tcard"><b>Phần 1 · Nghe (20 câu)</b><p>Câu 1–10: nghe từ, chọn chữ Hán đúng.<br>Câu 11–20: nghe câu, chọn nghĩa đúng.</p></div>
     <div class="tcard"><b>Phần 2 · Đọc (20 câu)</b><p>Câu 21–30: chọn nghĩa của từ.<br>Câu 31–35: chọn pinyin đúng.<br>Câu 36–40: chọn từ điền vào chỗ trống.</p></div>
@@ -19,7 +19,7 @@ function examHome(root){
   </div>
   <div class="row l"><button class="btn primary" id="estart">Bắt đầu làm bài</button></div>
   ${hist.length?`<div class="sec"><h3>Lịch sử làm bài</h3><div class="hist">${hist.map(h=>`<div><span>${esc(h.d)}</span><span>Nghe ${h.l}/20 · Đọc ${h.r}/20</span><b style="color:${h.s>=60?'var(--ok)':'var(--cinnabar)'}">${h.s} điểm</b></div>`).join('')}</div></div>`:''}`;
-  $('#estart').onclick=()=>examRun(root);
+  $('#estart').onclick=()=>examRun(root); A.bindPicker();
 }
 function buildExam(){
   const Q=[], words=ALLWORDS, used=new Set();
@@ -148,13 +148,13 @@ function dlgView(root,idx){
   const d=DLG[idx]; let role=null, running=false;
   root.innerHTML=`<h2 class="sect">Hội thoại</h2>
   <p class="lead">Chọn một tình huống, nghe cả đoạn rồi đóng vai một người. Đến lượt bạn, bấm micro và đọc câu của mình, máy sẽ chấm điểm.</p>
-  ${A.voiceWarn()}
+  ${A.voicePicker()}
   <div class="dlist">${DLG.map((x,i)=>`<button class="gcard" data-d="${i}" style="${i===idx?'border-color:var(--jade);background:var(--jade-soft)':''}"><span class="ghz">${x.hz}</span><b>${i+1}. ${esc(x.t)}</b><small>${x.lines.length} câu</small></button>`).join('')}</div>
   <div class="ctrl"><button class="btn primary sm" id="dplay">${ICON.play} Nghe cả bài</button><button class="btn sm" id="droleA">Đóng vai A</button><button class="btn sm" id="droleB">Đóng vai B</button><button class="btn sm" id="dorder">Luyện xếp câu</button>
     <label><input type="checkbox" id="dpy"> Ẩn pinyin</label><label><input type="checkbox" id="dvi"> Ẩn nghĩa</label></div>
   <div class="note" id="dmsg">Chạm vào từng câu để nghe riêng câu đó.</div>
   <div class="bubbles" id="bubs">${d.lines.map((l,i)=>`<div class="bub ${l.who}" id="b${i}"><span class="who">${l.who}</span><div class="body" data-i="${i}"><span class="hz">${l.h}</span><span class="p">${esc(l.p)}</span><span class="m">${esc(l.m)}</span><span class="sc" id="sc${i}"></span></div></div>`).join('')}</div>`;
-  $$('[data-d]',root).forEach(b=>b.onclick=()=>dlgView(root,+b.dataset.d));
+  $$('[data-d]',root).forEach(b=>b.onclick=()=>dlgView(root,+b.dataset.d)); A.bindPicker();
   const bubs=$('#bubs');
   $('#dpy').onchange=e=>bubs.classList.toggle('hidepy',e.target.checked);
   $('#dvi').onchange=e=>bubs.classList.toggle('hidevi',e.target.checked);

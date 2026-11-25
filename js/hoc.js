@@ -171,10 +171,9 @@ const LISTEN=[
 ];
 function renderListen(){
   const rates=[[0.6,'Chậm'],[0.85,'Vừa'],[1,'Nhanh']];
-  A.menu(HM,LISTEN,`${A.voiceWarn()}<div class="ctrl"><span>Tốc độ đọc</span><div class="seg" id="rate">${rates.map(([v,l])=>`<button data-r="${v}" class="${S.rate===v?'on':''}">${l}</button>`).join('')}</div>
-    <button class="btn sm" id="test">${ICON.spk} Thử giọng</button></div>`);
+  A.menu(HM,LISTEN,`${A.voicePicker()}<div class="ctrl"><span>Tốc độ đọc</span><div class="seg" id="rate">${rates.map(([v,l])=>`<button data-r="${v}" class="${S.rate===v?'on':''}">${l}</button>`).join('')}</div></div>`);
+  A.bindPicker();
   $$('[data-r]',HM).forEach(b=>b.onclick=()=>{S.rate=+b.dataset.r;save();renderListen();speak('你好')});
-  $('#test').onclick=()=>speak('你好，我学习汉语。');
 }
 function lWord(){
   const pool=A.unitWords();

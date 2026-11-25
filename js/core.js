@@ -72,20 +72,48 @@ const ICON={
 };
 
 /* ---------- đọc thành tiếng (TTS) ---------- */
-let zhVoice=null, voicesChecked=false;
+/* Chấm điểm giọng: ưu tiên giọng tự nhiên (Edge Natural, Google 普通话, Apple Nâng cao/Cao cấp), tránh giọng Quảng Đông và giọng "vui" của Apple */
+let zhVoices=[], zhVoice=null, voicesChecked=false;
+const NOVELTY=/eddy|flo|grandma|grandpa|reed|rocko|sandy|shelley|bad news|bahh|bells|boing|bubbles|cellos|jester|organ|superstar|trinoids|whisper|wobble|zarvox|albert|fred|junior|kathy|ralph/i;
+function voiceScore(v){
+  const n=(v.name||'')+' '+(v.voiceURI||''), l=(v.lang||'').toLowerCase().replace('_','-');
+  if(/yue|zh-hk|cantonese|粤|廣東|广东/i.test(l+' '+n)) return -100;
+  let s=0;
+  if(l==='zh-cn'||l==='cmn-cn'||l==='cmn-hans-cn'||l.startsWith('zh-hans')) s+=50; else if(l.startsWith('zh-tw')||l.startsWith('cmn')) s+=20; else s+=10;
+  if(/natural|neural/i.test(n)) s+=45;
+  if(/online/i.test(n)) s+=10;
+  if(/google/i.test(n)) s+=38;
+  if(/premium|高品质|高级|优化/i.test(n)) s+=34;
+  if(/enhanced|增强/i.test(n)) s+=28;
+  if(/xiaoxiao|xiaoyi|yunxi|yunjian|xiaochen|xiaohan/i.test(n)) s+=6;
+  if(/tingting|婷婷|yu-shu|语舒/i.test(n)) s+=4;
+  if(/lili|莉莉/i.test(n)) s+=20;           // Lili chỉ có bản Cao cấp/Nâng cao
+  if(/compact/i.test(n)) s-=8;             // bản rút gọn của Apple
+  if(NOVELTY.test(n)) s-=40;
+  if(v.localService===false) s+=3;
+  return s;
+}
+function voiceTag(v){
+  const s=voiceScore(v);
+  const tw=/^(zh-tw|cmn-hant)/i.test((v.lang||'').replace('_','-'))?' · giọng Đài Loan':'';
+  return (s>=85?'rất tự nhiên':s>=75?'tự nhiên':s>=50?'bình thường':'máy móc')+tw;
+}
 function loadVoices(){
   if(!('speechSynthesis' in W))return;
   const v=speechSynthesis.getVoices(); if(!v.length)return;
   voicesChecked=true;
-  zhVoice=v.find(x=>/zh[-_]CN/i.test(x.lang))||v.find(x=>/^(zh|cmn)/i.test(x.lang))||null;
+  zhVoices=v.filter(x=>/^(zh|cmn)/i.test(x.lang)&&voiceScore(x)>-100).sort((a,b)=>voiceScore(b)-voiceScore(a));
+  const picked=S.voice&&zhVoices.find(x=>x.voiceURI===S.voice);
+  zhVoice=picked||zhVoices[0]||null;
+  refreshPicker();
 }
-if('speechSynthesis' in W){loadVoices();speechSynthesis.onvoiceschanged=loadVoices}
+if('speechSynthesis' in W){loadVoices();speechSynthesis.onvoiceschanged=loadVoices;setTimeout(loadVoices,800)}
 function speak(text,slow,btn){
   return new Promise(res=>{
     if(!('speechSynthesis' in W)){toast('Trình duyệt này không hỗ trợ đọc thành tiếng');return res()}
     speechSynthesis.cancel();
     const u=new SpeechSynthesisUtterance(String(text).replace(/\s+/g,''));
-    u.lang='zh-CN'; if(zhVoice)u.voice=zhVoice;
+    u.lang=zhVoice?zhVoice.lang:'zh-CN'; if(zhVoice)u.voice=zhVoice;
     u.rate=slow?0.55:S.rate;
     let done=false; const fin=()=>{if(done)return;done=true;if(btn)btn.classList.remove('playing');res()};
     if(btn)btn.classList.add('playing');
@@ -94,10 +122,35 @@ function speak(text,slow,btn){
     speechSynthesis.speak(u);
   });
 }
+const VOICE_TIP=`Muốn giọng hay hơn: mở web bằng <b>Microsoft Edge</b> (giọng Xiaoxiao tự nhiên nhất) hoặc <b>Chrome</b> (giọng Google 普通话). Trên Mac/iPhone có thể tải giọng chất lượng cao: Cài đặt → Trợ năng → Nội dung được đọc → Giọng hệ thống → Quản lý giọng → Tiếng Trung (Trung Quốc đại lục) → tải <b>Tingting (Nâng cao)</b> hoặc <b>Lili (Cao cấp)</b>, rồi tải lại trang.`;
 function voiceWarn(){
   if(!('speechSynthesis' in W)) return `<div class="note warn">Trình duyệt này không hỗ trợ đọc thành tiếng. Hãy dùng Chrome, Edge hoặc Safari bản mới.</div>`;
-  if(voicesChecked&&!zhVoice) return `<div class="note warn">Máy bạn chưa có giọng đọc tiếng Trung nên âm thanh có thể sai. Trên Mac: Cài đặt hệ thống → Trợ năng → Nội dung được đọc → Giọng hệ thống → Quản lý giọng → thêm “Tiếng Trung (Trung Quốc đại lục)”. Trên Windows: Cài đặt → Thời gian và ngôn ngữ → Giọng nói → thêm giọng tiếng Trung. Điện thoại Android/iPhone thường có sẵn.</div>`;
+  if(voicesChecked&&!zhVoice) return `<div class="note warn">Máy bạn chưa có giọng đọc tiếng Trung nên âm thanh có thể sai. ${VOICE_TIP} Trên Windows: Cài đặt → Thời gian và ngôn ngữ → Giọng nói → thêm giọng tiếng Trung.</div>`;
   return '';
+}
+/* ô chọn giọng dùng chung */
+function pickerOptions(){
+  const best=zhVoices[0];
+  return `<option value="">Tự động${best?` · ${esc(best.name)}`:''}</option>`+zhVoices.map(v=>`<option value="${esc(v.voiceURI)}" ${S.voice===v.voiceURI?'selected':''}>${esc(v.name)} (${esc(v.lang)}) · ${voiceTag(v)}</option>`).join('');
+}
+function pickerNote(){
+  if(!('speechSynthesis' in W)) return 'Trình duyệt này không hỗ trợ đọc thành tiếng.';
+  if(!voicesChecked) return 'Đang tìm giọng đọc trên máy…';
+  if(!zhVoice) return 'Chưa có giọng tiếng Trung. '+VOICE_TIP;
+  const s=voiceScore(zhVoice);
+  return `Đang dùng: <b>${esc(zhVoice.name)}</b> · ${voiceTag(zhVoice)}. Máy có ${zhVoices.length} giọng tiếng Trung.`+(s<75?' '+VOICE_TIP:'');
+}
+function voicePicker(){
+  return `<div class="voicepick"><div class="ctrl" style="margin-bottom:6px"><label for="vsel">Giọng đọc</label><select id="vsel">${pickerOptions()}</select>
+    <button class="btn sm" id="vtest" type="button">${ICON.spk} Nghe thử</button></div><p class="meta" id="vnote" style="margin:0 0 14px">${pickerNote()}</p></div>`;
+}
+function bindPicker(){
+  const s=$('#vsel'), t=$('#vtest'); if(!s)return;
+  s.onchange=()=>{S.voice=s.value||'';save();zhVoice=(S.voice&&zhVoices.find(x=>x.voiceURI===S.voice))||zhVoices[0]||null;$('#vnote').innerHTML=pickerNote();speak('你好，我在学习汉语。',false,t)};
+  t.onclick=()=>speak('你好，我在学习汉语。',false,t);
+}
+function refreshPicker(){
+  const s=$('#vsel'); if(!s)return; s.innerHTML=pickerOptions(); const n=$('#vnote'); if(n)n.innerHTML=pickerNote();
 }
 
 /* ---------- nhận dạng giọng nói ---------- */
@@ -308,7 +361,7 @@ function pic(h,size=64){
 }
 
 W.App={UNITS,EMOJI,pic,ALLWORDS,ALLSENTS,S,save,$,$$,box,unit,addXP,renderStats,toast,rand,shuffle,sample,esc,toneOf,retone,baseSyl,pyHTML,pyPlain,pyKeys,
-  unitWords,unitSents,distract,mastery,ICON,speak,voiceWarn,listen,stopListen,SR,scoreSpeech,bestMatch,markHTML,recogWarn,strip,
+  unitWords,unitSents,distract,mastery,ICON,speak,voiceWarn,voicePicker,bindPicker,listen,stopListen,SR,scoreSpeech,bestMatch,markHTML,recogWarn,strip,
   cleanup,setKey:f=>keyHandler=f,addTimer:t=>timers.push(t),setRaf:r=>raf=r,onCleanup:f=>cleanups.push(f),
   main,setMain,showResult,runMC,menu,listenBtns,bindListen,unitSelect,register,start,mkSent};
 })();
