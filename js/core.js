@@ -19,7 +19,7 @@ const KEY='hanngu30-hsk-v2';
 const S={xp:0,streak:0,last:'',box:{},unit:1,prev:false,rate:0.85,fmode:'hv',best:{},exams:[],speak:{},wrote:{},tab:'vocab',name:'',log:[],days:{}};
 try{Object.assign(S,JSON.parse(localStorage.getItem(KEY)||'{}'))}catch(e){}
 if(!UNITS[S.unit-1])S.unit=1;
-function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){} if(W.onAppSave)W.onAppSave()}
 
 const $=s=>document.querySelector(s);
 const $$=(s,el=document)=>[...el.querySelectorAll(s)];
@@ -407,7 +407,7 @@ function pic(h,size=64){
   return `<span class="pic" style="--ps:${size}px" aria-hidden="true">${e.map(x=>`<img src="https://cdn.jsdelivr.net/gh/jdecked/twemoji@15.1.0/assets/svg/${twCode(x)}.svg" alt="${x}" loading="lazy" draggable="false" onerror="this.replaceWith(document.createTextNode(this.alt))">`).join('')}</span>`;
 }
 
-W.App={UNITS,EMOJI,pic,dayStr,knownCount,ago,logAct,KEY,ALLWORDS,ALLSENTS,S,save,$,$$,box,unit,addXP,renderStats,toast,rand,shuffle,sample,esc,toneOf,retone,baseSyl,pyHTML,pyPlain,pyKeys,
+W.App={UNITS,EMOJI,pic,dayStr,knownCount,ago,logAct,KEY,route:()=>route(),ALLWORDS,ALLSENTS,S,save,$,$$,box,unit,addXP,renderStats,toast,rand,shuffle,sample,esc,toneOf,retone,baseSyl,pyHTML,pyPlain,pyKeys,
   unitWords,unitSents,distract,mastery,ICON,speak,voiceWarn,voicePicker,bindPicker,listen,stopListen,SR,scoreSpeech,bestMatch,markHTML,recogWarn,strip,
   cleanup,setKey:f=>keyHandler=f,addTimer:t=>timers.push(t),setRaf:r=>raf=r,onCleanup:f=>cleanups.push(f),
   main,setMain,showResult,runMC,menu,listenBtns,bindListen,unitSelect,register,start,mkSent};

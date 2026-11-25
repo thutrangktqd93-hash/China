@@ -62,6 +62,7 @@ function histView(root,msg){
   </div>
   <div class="sec"><h3>Lịch học 20 tuần gần đây</h3>${heatmap()}</div>
   <div class="sec"><h3>Nhật ký hoạt động</h3>${logList()}</div>
+  <div class="sec"><h3>Đồng bộ giữa máy tính và điện thoại</h3>${A.syncPanel?A.syncPanel():""}</div>
   <div class="sec"><h3>Sao lưu & khôi phục</h3>
     <div class="gp backup">
       <p>File sao lưu chứa toàn bộ tiến độ: tên, XP, mức nhớ từng từ, kỷ lục, lịch sử thi và nhật ký. Mở web trên máy khác rồi chọn “Khôi phục từ file” để tiếp tục học.</p>
@@ -71,12 +72,12 @@ function histView(root,msg){
       <p class="meta" style="margin-top:14px">Xóa toàn bộ tiến độ trên máy này: <button class="linkbtn danger" id="wipe" type="button">Xóa tiến độ</button></p>
       <div id="wipeconfirm"></div>
     </div></div>`;
-  $('#bk').onclick=backup;
+  $('#bk').onclick=backup; if(A.bindSync)A.bindSync();
   $('#rs').onchange=e=>restorePick(root,e.target.files[0]);
   $('#wipe').onclick=()=>{
-    $('#wipeconfirm').innerHTML=`<div class="note warn">Toàn bộ XP, từ đã thuộc và lịch sử trên máy này sẽ bị xóa và không lấy lại được (trừ khi bạn có file sao lưu). <div class="row l" style="margin-top:8px"><button class="btn bad" id="wipeyes">Xóa hết</button><button class="btn" id="wipeno">Giữ lại</button></div></div>`;
+    $('#wipeconfirm').innerHTML=`<div class="note warn">Toàn bộ XP, từ đã thuộc và lịch sử trên máy này (và bản đồng bộ trên mạng nếu bạn đang đăng nhập) sẽ bị xóa và không lấy lại được (trừ khi bạn có file sao lưu). <div class="row l" style="margin-top:8px"><button class="btn bad" id="wipeyes">Xóa hết</button><button class="btn" id="wipeno">Giữ lại</button></div></div>`;
     $('#wipeno').onclick=()=>$('#wipeconfirm').innerHTML='';
-    $('#wipeyes').onclick=()=>{try{localStorage.removeItem(KEY)}catch(e){} location.hash='home'; location.reload()};
+    $('#wipeyes').onclick=async()=>{try{if(A.syncWipe)await A.syncWipe()}catch(e){} try{localStorage.removeItem(KEY)}catch(e){} location.hash='home'; location.reload()};
   };
 }
 

@@ -487,3 +487,9 @@ select{font:inherit;color:var(--ink);background:var(--surface);border:1px solid 
 .lg-time{font-variant-numeric:tabular-nums;color:var(--muted);font-size:13px}
 .lg-xp{font-weight:700;color:var(--ok);font-size:13px;white-space:nowrap}
 .backup .row .btn{cursor:pointer}
+
+/* nút đồng bộ */
+.syncchip{cursor:pointer;font:inherit;font-size:12.5px;align-items:center}
+.syncchip svg{flex:none}
+.syncchip.on{border-color:var(--ok);color:var(--ok)}
+.syncchip.err{border-color:var(--cinnabar);color:var(--cinnabar)}
