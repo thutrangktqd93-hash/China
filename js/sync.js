@@ -16,6 +16,7 @@ function mergeState(L,R){
   else {o.last=L.last||'';o.streak=+L.streak||0}
   o.box=maxMap(L.box,R.box); o.best=maxMap(L.best,R.best); o.speak=maxMap(L.speak,R.speak);
   o.wrote={...(R.wrote||{}),...(L.wrote||{})};
+  if(L.sh||R.sh)o.sh={...(R.sh||{}),...(L.sh||{}),best:maxMap((L.sh||{}).best,(R.sh||{}).best)};
   const days={...(R.days||{})};
   for(const [d,v] of Object.entries(L.days||{})){
     const r=days[d]; days[d]=r?{xp:Math.max(v.xp||0,r.xp||0),min:Math.max(v.min||0,r.min||0),k0:Math.min(v.k0??Infinity,r.k0??Infinity),k:Math.max(v.k||0,r.k||0)}:{...v};

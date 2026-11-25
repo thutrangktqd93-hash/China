@@ -134,7 +134,7 @@ function speak(text,slow,btn){
     speechSynthesis.cancel();
     const u=new SpeechSynthesisUtterance(String(text).replace(/\s+/g,''));
     u.lang=zhVoice?zhVoice.lang:'zh-CN'; if(zhVoice)u.voice=zhVoice;
-    u.rate=slow?0.55:S.rate;
+    u.rate=typeof slow==="number"?slow:slow?0.55:S.rate;
     let done=false; const fin=()=>{if(done)return;done=true;if(btn)btn.classList.remove('playing');res()};
     if(btn)btn.classList.add('playing');
     u.onend=fin; u.onerror=fin;
@@ -142,7 +142,18 @@ function speak(text,slow,btn){
     speechSynthesis.speak(u);
   });
 }
-const VOICE_TIP=`Muốn giọng hay hơn: mở web bằng <b>Microsoft Edge</b> (giọng Xiaoxiao tự nhiên nhất) hoặc <b>Chrome</b> (giọng Google 普通话). Trên Mac/iPhone có thể tải giọng chất lượng cao: Cài đặt → Trợ năng → Nội dung được đọc → Giọng hệ thống → Quản lý giọng → Tiếng Trung (Trung Quốc đại lục) → tải <b>Tingting (Nâng cao)</b> hoặc <b>Lili (Cao cấp)</b>, rồi tải lại trang.`;
+/* gợi ý giọng hay hơn, tùy máy và trình duyệt */
+const UA=navigator.userAgent;
+const IS_IOS=/iPad|iPhone|iPod/.test(UA)||(/Macintosh/.test(UA)&&navigator.maxTouchPoints>1);
+const IS_MAC=/Macintosh/.test(UA)&&!IS_IOS;
+const IS_SAFARI=/Safari/.test(UA)&&!/Chrome|Chromium|CriOS|FxiOS|Edg|OPR|coc_coc|Firefox/i.test(UA);
+const VOICE_TIP=IS_MAC&&IS_SAFARI
+  ? `<b>Safari trên Mac không cho web dùng giọng Lili hay Tingting (Nâng cao)</b>, kể cả khi máy đã tải, nên chỉ có vài giọng mặc định. Muốn giọng hay hơn, hãy mở web bằng <b>Chrome</b> hoặc <b>Cốc Cốc</b> (web tự chọn Lili), rồi bấm <b>Đồng bộ</b> để giữ chung tiến độ.`
+  : IS_IOS
+  ? `Muốn giọng hay hơn trên iPhone/iPad: Cài đặt → Trợ năng → Nội dung được đọc → Giọng nói → Tiếng Trung (Trung Quốc đại lục) → tải <b>Lili (Cao cấp)</b> hoặc <b>Tingting (Nâng cao)</b>, rồi vuốt tắt hẳn trình duyệt và mở lại web.`
+  : IS_MAC
+  ? `Muốn giọng hay hơn: Cài đặt hệ thống → Trợ năng → Nội dung được đọc → Giọng hệ thống → Quản lý giọng → Tiếng Trung (Trung Quốc đại lục) → tải <b>Lili (Cao cấp)</b> hoặc <b>Tingting (Nâng cao)</b>. Sau đó thoát hẳn trình duyệt (⌘ Command + Q) rồi mở lại web.`
+  : `Muốn giọng hay hơn: mở web bằng <b>Microsoft Edge</b> (giọng Xiaoxiao tự nhiên nhất) hoặc <b>Chrome</b> (giọng Google 普通话).`;
 function voiceWarn(){
   if(!('speechSynthesis' in W)) return `<div class="note warn">Trình duyệt này không hỗ trợ đọc thành tiếng. Hãy dùng Chrome, Edge hoặc Safari bản mới.</div>`;
   if(voicesChecked&&!zhVoice) return `<div class="note warn">Máy bạn chưa có giọng đọc tiếng Trung nên âm thanh có thể sai. ${VOICE_TIP} Trên Windows: Cài đặt → Thời gian và ngôn ngữ → Giọng nói → thêm giọng tiếng Trung.</div>`;
@@ -312,7 +323,7 @@ function unitSelect(onChange){
 /* ---------- router ---------- */
 const ROUTES={}, NAV=[
   ['home','Trang chủ'],['hoc','Học từ vựng'],['mua','Mưa từ vựng'],['viet','Luyện viết'],['pinyin','Pinyin'],
-  ['noi','Luyện nói'],['hoithoai','Hội thoại'],['nguphap','Ngữ pháp'],['bothu','Bộ thủ'],['thi','Thi thử'],['lichsu','Lịch sử']];
+  ['noi','Luyện nói'],['shadow','Shadowing'],['hoithoai','Hội thoại'],['nguphap','Ngữ pháp'],['bothu','Bộ thủ'],['thi','Thi thử'],['lichsu','Lịch sử']];
 function register(name,fn){ROUTES[name]=fn}
 function route(){
   cleanup(); stopListen(); if('speechSynthesis' in W)speechSynthesis.cancel();
@@ -337,6 +348,7 @@ const MODS=[
   ['viet','写','Luyện viết chữ Hán','Xem thứ tự nét và tự viết trên ô Mễ tự cách, báo nét sai.'],
   ['pinyin','拼','Lộ trình Pinyin','Thanh điệu, thanh mẫu, vận mẫu có âm thanh và bài luyện nghe.'],
   ['noi','说','Luyện nói','Đọc to câu mẫu, máy nhận dạng giọng và chấm điểm từng chữ.'],
+  ['shadow','跟','Shadowing','Nghe từng câu rồi nói đuổi theo ngay, có ngắt chờ, lặp câu, nghe chay và chấm điểm.','Mới'],
   ['hoithoai','话','Hội thoại','10 hội thoại theo tình huống, nghe từng câu và đóng vai.'],
   ['nguphap','语','Lượng từ & ngữ pháp','16 điểm ngữ pháp HSK 1, 20 lượng từ thông dụng, kèm bài tập.'],
   ['bothu','部','214 bộ thủ','Tra bộ thủ theo số nét, xem ví dụ trong từ HSK và chơi đoán nghĩa.'],
