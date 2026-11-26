@@ -129,22 +129,7 @@ function loadVoices(){
   refreshPicker();
 }
 if('speechSynthesis' in W){loadVoices();speechSynthesis.onvoiceschanged=loadVoices;setTimeout(loadVoices,800)}
-/* Phát âm một nội dung tiếng Trung.
-   1) Ưu tiên file audio trong thư viện (AudioService, js/audio.js): cùng một giọng trên mọi thiết bị.
-   2) Chỉ khi nội dung chưa có file, file lỗi hoặc mất mạng mới dùng giọng của trình duyệt (ttsSpeak).
-   Tốc độ: slow=true hoặc hệ số < 0,7 → file bản chậm; hệ số ≥ 0,95 ("Nhanh") → file bản thường phát nhanh 1,2 lần
-   (giữ cao độ); còn lại → file bản thường. Trước lần chạm/bấm đầu tiên của người dùng thì không phát gì. */
 function speak(text,slow,btn,onb){
-  const AS=W.AudioService;
-  if(AS&&!AS.interacted())return Promise.resolve();
-  const r=typeof slow==='number'?slow:slow?0.55:S.rate;
-  if(!AS)return ttsSpeak(text,slow,btn,onb);
-  if('speechSynthesis' in W)speechSynthesis.cancel();
-  return AS.play(text,{slow:slow===true||r<0.7,rate:slow!==true&&r>=0.95?1.2:1,btn})
-    .then(st=>st==='missing'?ttsSpeak(text,slow,btn,onb):undefined);
-}
-function stopSpeak(){if(W.AudioService)W.AudioService.stop();if('speechSynthesis' in W)speechSynthesis.cancel()}
-function ttsSpeak(text,slow,btn,onb){
   return new Promise(res=>{
     if(!('speechSynthesis' in W)){toast('Trình duyệt này không hỗ trợ đọc thành tiếng');return res()}
     speechSynthesis.cancel();
@@ -171,7 +156,6 @@ const VOICE_TIP=IS_MAC&&IS_SAFARI
   ? `Muốn giọng hay hơn: Cài đặt hệ thống → Trợ năng → Nội dung được đọc → Giọng hệ thống → Quản lý giọng → Tiếng Trung (Trung Quốc đại lục) → tải <b>Lili (Cao cấp)</b> hoặc <b>Tingting (Nâng cao)</b>. Sau đó thoát hẳn trình duyệt (⌘ Command + Q) rồi mở lại web.`
   : `Muốn giọng hay hơn: mở web bằng <b>Microsoft Edge</b> (giọng Xiaoxiao tự nhiên nhất) hoặc <b>Chrome</b> (giọng Google 普通话).`;
 function voiceWarn(){
-  if(W.AudioService)return '';   // đã có thư viện audio: không cần giọng của máy
   if(!('speechSynthesis' in W)) return `<div class="note warn">Trình duyệt này không hỗ trợ đọc thành tiếng. Hãy dùng Chrome, Edge hoặc Safari bản mới.</div>`;
   if(voicesChecked&&!zhVoice) return `<div class="note warn">Máy bạn chưa có giọng đọc tiếng Trung nên âm thanh có thể sai. ${VOICE_TIP} Trên Windows: Cài đặt → Thời gian và ngôn ngữ → Giọng nói → thêm giọng tiếng Trung.</div>`;
   return '';
@@ -182,7 +166,6 @@ function pickerOptions(){
   return `<option value="">Tự động${best?` · ${esc(best.name)}`:''}</option>`+zhVoices.map(v=>`<option value="${esc(v.voiceURI)}" ${S.voice===v.voiceURI?'selected':''}>${esc(v.name)} (${esc(v.lang)}) · ${voiceTag(v)}</option>`).join('');
 }
 function pickerNote(){
-  if(W.AudioService)return `Âm thanh phát từ <b>thư viện audio giọng chuẩn</b> (giọng nữ phổ thông, giống nhau trên mọi thiết bị, không cần cài thêm giọng). Giọng của máy chọn ở đây chỉ dùng khi một nội dung chưa có file audio${zhVoice?` (hiện là ${esc(zhVoice.name)})`:''}.`;
   if(!('speechSynthesis' in W)) return 'Trình duyệt này không hỗ trợ đọc thành tiếng.';
   if(!voicesChecked) return 'Đang tìm giọng đọc trên máy…';
   if(!zhVoice) return 'Chưa có giọng tiếng Trung. '+VOICE_TIP;
@@ -190,7 +173,7 @@ function pickerNote(){
   return `Đang dùng: <b>${esc(zhVoice.name)}</b> · ${voiceTag(zhVoice)}. Máy có ${zhVoices.length} giọng tiếng Trung.`+(s<75?' '+VOICE_TIP:'');
 }
 function voicePicker(){
-  return `<div class="voicepick"><div class="ctrl" style="margin-bottom:6px"><label for="vsel">${W.AudioService?'Giọng dự phòng':'Giọng đọc'}</label><select id="vsel">${pickerOptions()}</select>
+  return `<div class="voicepick"><div class="ctrl" style="margin-bottom:6px"><label for="vsel">Giọng đọc</label><select id="vsel">${pickerOptions()}</select>
     <button class="btn sm" id="vtest" type="button">${ICON.spk} Nghe thử</button></div><p class="meta" id="vnote" style="margin:0 0 14px">${pickerNote()}</p></div>`;
 }
 function bindPicker(){
@@ -209,7 +192,7 @@ function listen(){
   return new Promise((res,rej)=>{
     if(!SR) return rej(new Error('unsupported'));
     if(activeRec){try{activeRec.abort()}catch(e){}}
-    stopSpeak();
+    if('speechSynthesis' in W)speechSynthesis.cancel();
     const r=new SR(); activeRec=r;
     r.lang='zh-CN'; r.interimResults=false; r.maxAlternatives=5; r.continuous=false;
     let got=false;
@@ -346,7 +329,7 @@ const ROUTES={}, NAV=[
   ['noi','Luyện nói'],['shadow','Shadowing'],['hoithoai','Hội thoại'],['nguphap','Ngữ pháp'],['bothu','Bộ thủ'],['thi','Kiểm tra'],['lichsu','Lịch sử']];
 function register(name,fn){ROUTES[name]=fn}
 function route(){
-  cleanup(); stopListen(); stopSpeak();
+  cleanup(); stopListen(); if('speechSynthesis' in W)speechSynthesis.cancel();
   let name=(location.hash||'#home').slice(1); if(!ROUTES[name])name='home';
   $$('#nav a').forEach(a=>a.classList.toggle('on',a.dataset.r===name));
   const on=$(`#nav a[data-r="${name}"]`); if(on)on.scrollIntoView({block:'nearest',inline:'nearest'});
@@ -464,7 +447,7 @@ function pic(h,size=64){
   return `<span class="pic" style="--ps:${size}px" aria-hidden="true">${e.map(x=>`<img src="https://cdn.jsdelivr.net/gh/jdecked/twemoji@15.1.0/assets/svg/${twCode(x)}.svg" alt="${x}" loading="lazy" draggable="false" onerror="this.replaceWith(document.createTextNode(this.alt))">`).join('')}</span>`;
 }
 
-W.App={UNITS,EMOJI,pic,dayStr,knownCount,ago,logAct,KEY,route:()=>route(),stopSpeak,ALLWORDS,ALLSENTS,S,save,$,$$,box,unit,addXP,renderStats,toast,rand,shuffle,sample,esc,toneOf,retone,baseSyl,pyHTML,pyPlain,pyKeys,
+W.App={UNITS,EMOJI,pic,dayStr,knownCount,ago,logAct,KEY,route:()=>route(),ALLWORDS,ALLSENTS,S,save,$,$$,box,unit,addXP,renderStats,toast,rand,shuffle,sample,esc,toneOf,retone,baseSyl,pyHTML,pyPlain,pyKeys,
   unitWords,unitSents,distract,mastery,ICON,speak,voiceWarn,voicePicker,bindPicker,listen,stopListen,SR,scoreSpeech,bestMatch,markHTML,recogWarn,strip,
   cleanup,setKey:f=>keyHandler=f,addTimer:t=>timers.push(t),setRaf:r=>raf=r,onCleanup:f=>cleanups.push(f),
   main,setMain,showResult,runMC,menu,listenBtns,bindListen,unitSelect,register,start,mkSent};
