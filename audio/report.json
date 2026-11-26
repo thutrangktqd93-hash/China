@@ -1,0 +1,54 @@
+{
+ "time": "2026-11-26T10:06:09",
+ "config": {
+  "engine": "MeloTTS (myshell-ai, MIT)",
+  "language": "ZH",
+  "speaker": "ZH",
+  "speed": {
+   "normal": 0.58,
+   "slow": 0.48
+  },
+  "sdp_ratio": 0.5,
+  "noise_scale": 0.667,
+  "noise_scale_w": 0.9,
+  "format": "AAC (.m4a) 64 kbps mono",
+  "trim_pad_ms": 120,
+  "peak": 0.89,
+  "seed": 1234
+ },
+ "configHash": "0a074c5158",
+ "sourceEntries": 1160,
+ "unique": 1040,
+ "toBuild": 3,
+ "built": 3,
+ "warnings": [],
+ "errors": {},
+ "missing": 0,
+ "badFiles": [],
+ "orphans": [],
+ "pruned": 0,
+ "coverage": {
+  "word": {
+   "total": 507,
+   "done": 507
+  },
+  "sentence": {
+   "total": 147,
+   "done": 147
+  },
+  "dialogue": {
+   "total": 48,
+   "done": 48
+  },
+  "listening": {
+   "total": 35,
+   "done": 35
+  },
+  "pronunciation": {
+   "total": 303,
+   "done": 303
+  }
+ },
+ "totalMB": 27.24,
+ "files": 2080
+}

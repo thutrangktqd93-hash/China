@@ -17,7 +17,7 @@ function build(){
   HM=$('#hmain'); A.setMain(HM);
   $('#ulist').onclick=e=>{const b=e.target.closest('.li');if(!b)return;S.unit=+b.dataset.u;save();A.cleanup();renderUnits();renderTab();b.scrollIntoView({block:'nearest',inline:'nearest'})};
   $('#prev').onchange=e=>{S.prev=e.target.checked;save();renderTab()};
-  $('#tabs').onclick=e=>{const b=e.target.closest('.tab');if(!b)return;S.tab=b.dataset.tab;save();A.cleanup();if('speechSynthesis' in window)speechSynthesis.cancel();renderTab()};
+  $('#tabs').onclick=e=>{const b=e.target.closest('.tab');if(!b)return;S.tab=b.dataset.tab;save();A.cleanup();A.stopSpeak();renderTab()};
   renderUnits(); renderTab();
   const on=$('#ulist .li.on'); if(on)on.scrollIntoView({block:'nearest',inline:'nearest'});
 }
@@ -36,7 +36,7 @@ function renderTab(){
   $$('.tab',root).forEach(t=>t.classList.toggle('on',t.dataset.tab===S.tab));
   ({vocab:renderVocab,flash:startFlash,game:renderGames,listen:renderListen}[S.tab]||renderVocab)();
 }
-const toTab=t=>()=>{S.tab=t;save();A.cleanup();if('speechSynthesis' in window)speechSynthesis.cancel();renderTab()};
+const toTab=t=>()=>{S.tab=t;save();A.cleanup();A.stopSpeak();renderTab()};
 
 /* ---------- thẻ từ ---------- */
 function renderVocab(){

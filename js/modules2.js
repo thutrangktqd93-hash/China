@@ -69,7 +69,7 @@ function examRun(root){
     submit(false)};
   $('#esub').onclick=trySubmit; $('#esub2').onclick=trySubmit;
   function submit(timeout){
-    if(done)return; done=true; A.cleanup(); speechSynthesis&&speechSynthesis.cancel();
+    if(done)return; done=true; A.cleanup(); A.stopSpeak();
     let l=0,r=0;
     Q.forEach((q,i)=>{const ok=ans[i]>=0&&q.opts[ans[i]].ok; if(ok){q.part==='l'?l++:r++} else if(q.word&&ans[i]>=0&&A.srs)A.srs.flag(q.word);
       const it=$('#q'+i); it.classList.add(ok?'right':'wrong');
@@ -167,9 +167,9 @@ function dlgView(root,idx){
     for(let i=0;i<d.lines.length&&!stop;i++){hl(i);$('#b'+i).scrollIntoView({block:'nearest'});await speak(d.lines[i].h);await new Promise(r=>setTimeout(r,350))}
     hl(-1); running=false; if(!stop)msg('Xong. Thử đóng vai A hoặc B nhé.');
   }
-  $('#dplay').onclick=()=>{if(running){stop=true;speechSynthesis.cancel();A.stopListen();running=false;hl(-1);msg('Đã dừng.')}else playAll()};
+  $('#dplay').onclick=()=>{if(running){stop=true;A.stopSpeak();A.stopListen();running=false;hl(-1);msg('Đã dừng.')}else playAll()};
   async function rolePlay(r){
-    if(running){stop=true;speechSynthesis.cancel();A.stopListen();await new Promise(x=>setTimeout(x,200))}
+    if(running){stop=true;A.stopSpeak();A.stopListen();await new Promise(x=>setTimeout(x,200))}
     if(!A.SR){msg(A.speech.errorHelp('unsupported'));return}
     if(A.speech.consentNeeded()){msg(A.speech.consentHTML());A.speech.bindConsent(()=>rolePlay(r));return}
     role=r; running=true; stop=false; const scores=[];

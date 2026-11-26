@@ -164,7 +164,7 @@ function player(root,id){
     const xp=o.mode==='nghe'?2:L.length*(o.mode==='cham'?2:1);
     A.addXP(xp,'Shadowing: '+it.t,`${MODES.find(m=>m[0]===o.mode)[1]} · ${L.length} câu`);
   }
-  function halt(){run++;running=false;if('speechSynthesis' in window)speechSynthesis.cancel();A.stopListen();setGo()}
+  function halt(){run++;running=false;A.stopSpeak();A.stopListen();setGo()}
   function setGo(){const g=$('#shgo');if(g)g.innerHTML=running?'⏸ Dừng':`${ICON.play} ${cur>0&&cur<L.length?'Tiếp tục':'Bắt đầu'}`}
   A.onCleanup(()=>{run++;A.stopListen()});
 
