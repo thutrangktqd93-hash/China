@@ -190,7 +190,8 @@ function pathBlock(){
   const gram=Object.keys(d).filter(k=>/^(gq|mq|oq)-/.test(k)).length;
   const spoke=Object.keys(S.speak||{}).length, wrote=Object.keys(S.wrote||{}).length;
   const chars=new Set(ALLWORDS.flatMap(w=>[...w.h])).size;
-  const ex=(S.exams||[]), best=ex.length?Math.max(...ex.map(e=>e.s)):null;
+  /* điểm quy về thang 100 (đề mô phỏng HSK chấm trên 200) */
+  const ex=(S.exams||[]), best=ex.length?Math.max(...ex.map(e=>Math.round(e.s*100/(e.max||100)))):null;
   const stages=[
     {n:1,t:'Phát âm và pinyin',d:S.track==='pinyin'?'Bạn đã chọn bỏ qua (đã biết pinyin)':`${pyN}/${py.length} bước`,p:S.track==='pinyin'?100:pyN/py.length*100,go:'pinyin'},
     {n:2,t:'Từ vựng cơ bản',d:`${o.intro}/${o.total} từ đã học · ${o.mastered} nhớ dài hạn`,p:o.intro/o.total*100,go:'flash'},
@@ -198,7 +199,7 @@ function pathBlock(){
     {n:4,t:'Ngữ pháp nền tảng',d:gram?`${gram} lượt bài tập ngữ pháp, lượng từ`:'Chưa làm bài tập',p:Math.min(100,gram/10*100),go:'nguphap'},
     {n:5,t:'Nghe và nói',d:`${cnt('lsent')}/${UNITS.length} bài nghe câu · ${spoke} câu/từ đã đọc`,p:(cnt('lsent')/UNITS.length*50)+Math.min(50,spoke/A.ALLSENTS.length*50),go:'listen'},
     {n:6,t:'Đọc và viết',d:`${wrote}/${chars} chữ đã luyện viết`,p:wrote/chars*100,go:'viet'},
-    {n:7,t:'Ôn tập và kiểm tra',d:ex.length?`${ex.length} lần kiểm tra · cao nhất ${best} điểm`:'Chưa làm bài kiểm tra tổng hợp',p:best!=null?best:0,go:'thi'},
+    {n:7,t:'Ôn tập và kiểm tra',d:ex.length?`${ex.length} lần kiểm tra · cao nhất ${best}/100 điểm (quy đổi)`:'Chưa làm bài kiểm tra tổng hợp',p:best!=null?best:0,go:'thi'},
   ];
   return `<section class="dsec"><h2 class="eyebrow">Lộ trình học</h2>
     <ol class="path">${stages.map(s=>`<li><button class="pstep" data-path="${s.go}" type="button"><span class="pn">${s.n}</span><span class="pt"><b>${s.t}</b><small>${esc(s.d)}</small><i class="kbar"><b style="width:${Math.round(Math.max(0,Math.min(100,s.p)))}%"></b></i></span></button></li>`).join('')}</ol>

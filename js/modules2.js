@@ -10,16 +10,25 @@ function examHome(root){
   A.cleanup();
   const hist=(S.exams||[]).slice(-8).reverse();
   root.innerHTML=`<h2 class="sect">Kiểm tra tổng hợp cấp 1 – GF0025-2021</h2>
-  <p class="lead">Đề luyện tập nội bộ 40 câu, mỗi lần làm sẽ ra đề mới từ ${A.ALLWORDS.length} từ của danh sách cấp 1 (GF0025-2021). Làm trong 30 phút, nộp bài để xem điểm và giải thích câu sai. <b>Đây không phải đề thi HSK chính thức</b> và không theo cấu trúc đề thi HSK mới.</p>
+  <p class="lead">Đề luyện tập nội bộ, mỗi lần làm sẽ ra đề mới từ ${A.ALLWORDS.length} từ của danh sách cấp 1 (GF0025-2021). <b>Đây không phải đề thi HSK chính thức.</b> Có hai chế độ: đề mô phỏng theo dạng câu của đề HSK 1 mới, và kiểm tra nhanh từ vựng.</p>
   ${A.voicePicker()}
-  <div class="tgrid" style="margin-bottom:18px">
-    <div class="tcard"><b>Phần 1 · Nghe (20 câu)</b><p>Câu 1–10: nghe từ, chọn chữ Hán đúng.<br>Câu 11–20: nghe câu, chọn nghĩa đúng.</p></div>
-    <div class="tcard"><b>Phần 2 · Đọc (20 câu)</b><p>Câu 21–30: chọn nghĩa của từ.<br>Câu 31–35: chọn pinyin đúng.<br>Câu 36–40: chọn từ điền vào chỗ trống.</p></div>
-    <div class="tcard"><b>Chấm điểm</b><p>Mỗi câu 2,5 điểm, tổng 100. Đạt từ 60 điểm.</p></div>
+  <div class="exmodes">
+    <div class="tcard exmode"><span class="pill">Mô phỏng dạng HSK</span><b>Đề mô phỏng dạng HSK 1 (mới)</b>
+      <p>40 câu, ${HSK_MIN} phút, theo 8 dạng câu của đề HSK 1 mới do 汉考国际 công bố (áp dụng từ 07/2026).</p>
+      <p><b>Nghe (20 câu):</b> chọn 1 trong 3 hình · nghe câu hỏi, chọn câu trả lời · nghe hội thoại, chọn hình · nghe một đoạn và câu hỏi, chọn đáp án. Mỗi câu nghe tối đa 2 lần.</p>
+      <p><b>Đọc (20 câu):</b> nối câu với hình · nối câu hỏi với câu trả lời · chọn từ điền vào chỗ trống · đọc câu và trả lời câu hỏi ★.</p>
+      <p><b>Chấm điểm:</b> mỗi câu 5 điểm, Nghe 100 + Đọc 100 = 200, đạt từ 120. Đề mới chưa công bố thang điểm nên tạm dùng thang của đề HSK 1 cũ.</p>
+      <div class="row l"><button class="btn primary" id="hstart">Làm đề mô phỏng</button></div></div>
+    <div class="tcard exmode"><span class="pill">Từ vựng</span><b>Kiểm tra nhanh từ vựng</b>
+      <p>40 câu trắc nghiệm, 30 phút.</p>
+      <p><b>Nghe (20 câu):</b> câu 1–10 nghe từ, chọn chữ Hán đúng · câu 11–20 nghe câu, chọn nghĩa đúng.</p>
+      <p><b>Đọc (20 câu):</b> câu 21–30 chọn nghĩa của từ · câu 31–35 chọn pinyin đúng · câu 36–40 chọn từ điền vào chỗ trống.</p>
+      <p><b>Chấm điểm:</b> mỗi câu 2,5 điểm, tổng 100. Đạt từ 60 điểm.</p>
+      <div class="row l"><button class="btn" id="estart">Kiểm tra nhanh</button></div></div>
   </div>
-  <div class="row l"><button class="btn primary" id="estart">Bắt đầu làm bài</button></div>
-  ${hist.length?`<div class="sec"><h3>Lịch sử làm bài</h3><div class="hist">${hist.map(h=>`<div><span>${esc(h.d)}</span><span>Nghe ${h.l}/20 · Đọc ${h.r}/20</span><b style="color:${h.s>=60?'var(--ok)':'var(--cinnabar)'}">${h.s} điểm</b></div>`).join('')}</div></div>`:''}`;
-  $('#estart').onclick=()=>examRun(root); A.bindPicker();
+  ${hist.length?`<div class="sec"><h3>Lịch sử làm bài</h3><div class="hist">${hist.map(h=>{const hk=h.mode==='hsk',max=h.max||100,pass=h.pass||(hk?HSK_PASS:60);
+    return `<div><span>${esc(h.d)} · ${hk?'Mô phỏng HSK':'Kiểm tra nhanh'}</span><span>Nghe ${h.l}/20 · Đọc ${h.r}/20</span><b style="color:${h.s>=pass?'var(--ok)':'var(--cinnabar)'}">${h.s}/${max} điểm</b></div>`}).join('')}</div></div>`:''}`;
+  $('#estart').onclick=()=>examRun(root); $('#hstart').onclick=()=>hskRun(root); A.bindPicker();
 }
 function buildExam(){
   const Q=[], words=ALLWORDS, used=new Set();
@@ -52,7 +61,7 @@ function examRun(root){
     ${q.q?`<div class="qtext">${q.q}</div>`:''}
     <div class="opts ${q.one?'one':''}">${q.opts.map((o,k)=>`<button class="opt" data-q="${i}" data-k="${k}"><kbd>${'ABCD'[k]}</kbd><span>${o.html}</span></button>`).join('')}</div>
     <div class="qexp" id="x${i}"></div></div>`;
-  root.innerHTML=`<div class="exhead"><b>Kiểm tra tổng hợp cấp 1</b><span class="meta" id="eprog">Đã làm 0/40</span><span class="clock" id="eclock">30:00</span><button class="btn primary sm" id="esub">Nộp bài</button></div>
+  root.innerHTML=`<div class="exhead"><b>Kiểm tra nhanh từ vựng</b><span class="meta" id="eprog">Đã làm 0/40</span><span class="clock" id="eclock">30:00</span><button class="btn primary sm" id="esub">Nộp bài</button></div>
     <h3 class="eyebrow" style="margin-top:14px">Phần 1 · Nghe</h3><div class="qlist">${Q.map((q,i)=>q.part==='l'?qhtml(q,i):'').join('')}</div>
     <h3 class="eyebrow" style="margin-top:24px">Phần 2 · Đọc</h3><div class="qlist">${Q.map((q,i)=>q.part==='r'?qhtml(q,i):'').join('')}</div>
     <div class="row" style="margin-top:20px"><button class="btn primary" id="esub2">Nộp bài</button></div><div id="eres"></div>`;
@@ -77,8 +86,8 @@ function examRun(root){
       $('#x'+i).innerHTML=`${ok?'<b style="color:var(--ok)">Đúng</b>':ans[i]<0?'<b style="color:var(--cinnabar)">Bỏ trống</b>':'<b style="color:var(--cinnabar)">Sai</b>'} · ${esc(q.exp)}`;
     });
     const s=Math.round((l+r)*2.5);
-    S.exams=(S.exams||[]).concat({d:new Date().toLocaleString('vi-VN',{dateStyle:'short',timeStyle:'short'}),l,r,s}).slice(-30); save();
-    A.addXP(10+(l+r),"Kiểm tra tổng hợp cấp 1",`${s} điểm · Nghe ${l}/20 · Đọc ${r}/20`);
+    S.exams=(S.exams||[]).concat({d:new Date().toLocaleString('vi-VN',{dateStyle:'short',timeStyle:'short'}),l,r,s,mode:'quick',max:100,pass:60}).slice(-30); save();
+    A.addXP(10+(l+r),"Kiểm tra nhanh từ vựng",`${s} điểm · Nghe ${l}/20 · Đọc ${r}/20`);
     const pass=s>=60;
     $('#eres').innerHTML=`<div class="result" style="margin-top:24px"><div class="seal ${pass?'':'long'}">${pass?'合格':'加油'}</div>
       <h2>${s} / 100 điểm</h2><p class="gloss">${timeout?'Hết giờ, bài đã được nộp. ':''}${pass?'Đạt yêu cầu':'Chưa đạt, cố lên nhé'}</p>
@@ -88,6 +97,254 @@ function examRun(root){
     $('#eagain').onclick=()=>examRun(root); $('#ehome').onclick=()=>examHome(root);
     window.scrollTo({top:0});
     A.toast(`Bạn được ${s} điểm. Kéo xuống để xem câu sai.`);
+  }
+}
+
+/* =================================================================
+   ĐỀ MÔ PHỎNG DẠNG HSK 1 MỚI
+   Theo "新版HSK（1-6级）考试结构与样题示例" (汉考国际, công bố 12/2025, áp dụng 07/2026), phần cấp 1:
+   Nghe 20 câu (~12 phút): P1 nghe cụm từ chọn 1/3 hình · P2 nghe câu hỏi chọn câu trả lời (3 lựa chọn chữ)
+     · P3 nghe hội thoại nối với hình A–F · P4 nghe đoạn nói + câu hỏi, chọn 1/3.
+   Đọc 20 câu (20 phút): P1 câu nối với hình A–F · P2 nối câu hỏi với câu trả lời A–F
+     · P3 chọn từ điền chỗ trống (6 từ A–F) · P4 đọc câu + câu hỏi ★, chọn 1/3.
+   Đề mới chưa công bố thang điểm: tạm dùng thang đề HSK 1 cũ (Nghe 100 + Đọc 100, đạt 120/200).
+   ================================================================= */
+const HSK_MAX=200, HSK_PASS=120, HSK_MIN=32, LET='ABCDEF';
+const WMAP=new Map(ALLWORDS.map(w=>[w.h,w]));
+const words=s=>s.split(' ').map(h=>WMAP.get(h)).filter(Boolean);
+const share=(a,b)=>[...a].some(c=>b.includes(c));
+/* từ cụ thể có hình rõ nghĩa; mỗi hình chỉ thuộc một từ, bỏ các cặp hình dễ nhầm (书/本子, 汽车/打车, 飞机/机场…) */
+const PICT=(()=>{const seen=new Set();return words('爷爷 奶奶 老师 学生 医生 工人 米饭 菜 肉 鸡蛋 面包 面条儿 包子 水果 水 茶 牛奶 学校 书 书包 门 床 衣服 钱 钱包 手机 电话 电脑 电视 洗手间 房子 汽车 火车 飞机 地图 商店 医院 电影 球 唱歌 睡觉 笑 跑 看 听 下雨 风 树 山 花 冷 热 生日 洗 买 中国')
+  .filter(w=>{const e=(A.EMOJI[w.h]||[]).join('');if(!e||seen.has(e))return false;seen.add(e);return true})})();
+/* động từ có hình chỉ dùng cho nghe phần 1; các phần nối hình chỉ dùng danh từ / hiện tượng làm hình */
+const VERBISH=new Set(['看','听','买','洗','笑','跑']);
+const PSET=new Set(PICT.filter(w=>!VERBISH.has(w.h)).map(w=>w.h)), PKEY=PICT.filter(w=>PSET.has(w.h));
+/* nhóm từ cho câu hỏi "说话人…" (nghe P4, đọc P4) */
+const CATS=[
+  {k:'place',q:'说话人说到了哪个地方？',qp:'Shuōhuàrén shuō dào le nǎ ge dìfang?',qv:'Người nói nhắc đến nơi nào?',w:words('学校 医院 商店 商场 书店 饭店 电影院 图书馆 机场 车站 北京 中国 洗手间')},
+  {k:'time',q:'说话人说的是什么时候？',qp:'Shuōhuàrén shuō de shì shénme shíhou?',qv:'Người nói nói về lúc nào?',w:words('今天 明天 昨天 早上 上午 中午 下午 晚上 今年 明年 去年')},
+  {k:'who',q:'说话人说到了谁？',qp:'Shuōhuàrén shuō dào le shéi?',qv:'Người nói nhắc đến ai?',w:words('爸爸 妈妈 哥哥 姐姐 弟弟 妹妹 爷爷 奶奶 老师 医生 学生 朋友 同学 儿子 女儿')},
+  {k:'thing',q:'说话人说到了什么东西？',qp:'Shuōhuàrén shuō dào le shénme dōngxi?',qv:'Người nói nhắc đến vật gì?',w:words('米饭 菜 肉 鸡蛋 面包 面条儿 包子 水果 茶 牛奶 手机 电脑 电视 衣服 书包 钱包 杯子 本子')}];
+/* từ điền chỗ trống: chia theo vai trò trong câu; 6 từ của một bộ đề thuộc 6 nhóm khác nhau để mỗi chỗ trống chỉ có một từ hợp */
+const FILL=[
+  /* danh từ chỉ nơi chốn, người, đồ vật gộp một nhóm: nhiều chỗ trống nhận cả ba */
+  ['noun','学校 医院 商店 北京 中国 饭店 书店 机场 车站 图书馆 老师 医生 学生 朋友 爸爸 妈妈 哥哥 姐姐 同学 米饭 茶 水 牛奶 水果 面包 菜 书 手机 电脑 电视 衣服 钱'],['verb','去 来 回 吃 喝 看 听 买 学习 写 读 坐 住'],
+  ['adj','好 大 小 冷 热 忙 贵 多'],['measure','个 本 杯 块 岁 口'],['time','今天 明天 昨天 上午 下午 晚上'],
+  ['number','一 二 三 四 五 六 七 八 九 十 两'],['qword','几 多少 怎么']].map(([k,s])=>({k,w:words(s)}));
+const NUMSLOT=new Set(['点','岁','月','号','个','口','块','本','杯','次','分','年','天','页']);
+const PRON=new Set(['我','你','他','她','您','我们','你们','他们','她们']);
+const FILLCAT=new Map(FILL.flatMap(c=>c.w.map(w=>[w.h,c.k])));
+/* chỗ trống đứng sau / trước các từ này thì nhiều loại từ cùng hợp, nên bỏ */
+const OPEN_PREV=new Set(['是','的','有','买','这','那','要','喜欢','爱','和','也','都','很','叫','在','给','了','好','大','小','新']), OPEN_NEXT=new Set(['和','、','的','也','都']);
+
+const tok=h=>h.replace(/[。？！，、：；]/g,' ').trim().split(/\s+/).filter(Boolean);
+/* tách câu nhiều vế thành từng câu (theo 。？！) kèm pinyin nếu số vế khớp */
+function segs(raw,p){
+  const hs=raw.trim().match(/[^。？！]+[。？！]?/g)||[], ps=(p||'').trim().match(/[^.?!]+[.?!]?/g)||[];
+  return hs.map((h,i)=>({h:h.replace(/\s+/g,''),tokens:tok(h),p:hs.length===ps.length?ps[i].trim():''}));
+}
+function qfam(h){if(/什么时候|几点|哪天|星期几|几月|几号/.test(h))return 'time';if(/哪儿|哪里/.test(h))return 'place';if(/谁/.test(h))return 'who';if(/几|多少|多大/.test(h))return 'num';if(/还是/.test(h))return 'choice';if(/什么/.test(h))return 'what';if(/哪/.test(h))return 'which';return 'state'}
+const ln=(who,x)=>{const [s,p,m]=x.split('|');return {who,raw:s,h:s.replace(/\s+/g,''),tokens:tok(s),p:p.trim(),m:m.trim()}};
+const DLGS=[...(window.DIALOGS||[]).map(d=>d.lines.map(([who,s,p,m])=>({who,raw:s,h:s.replace(/\s+/g,''),tokens:tok(s),p,m}))),
+  ...(window.EXAM_DLG||[]).map(([a,b])=>[ln('A',a),ln('B',b)])];
+/* cặp hỏi – đáp lấy từ các bài hội thoại: câu hỏi cuối lượt của người này, vế đầu lượt của người kia */
+const QA=(()=>{const out=[],seen=new Set();
+  DLGS.forEach(L=>L.forEach((l,i)=>{const n=L[i+1];if(!n||n.who===l.who)return;
+    const qs=segs(l.raw,l.p),q=qs[qs.length-1];if(!q||!/？$/.test(q.h)||q.h.length<4||/^(你|您)呢？$/.test(q.h))return;
+    const a=segs(n.raw,n.p)[0];if(!a||/？$/.test(a.h)||seen.has(q.h))return;seen.add(q.h);
+    out.push({q,a,fam:qfam(q.h),m:l.m+' → '+n.m})}));
+  (window.EXAM_QA||[]).forEach(([x,y])=>{const q=ln('A',x),a=ln('B',y);if(seen.has(q.h))return;seen.add(q.h);out.push({q,a,fam:qfam(q.h),m:q.m+' → '+a.m})});
+  return out})();
+/* câu trả lời nhiễu không được hợp với câu hỏi: "他是谁？" ↔ "他是医生", câu hỏi có/không ↔ câu trả lời giờ giấc, "茶还是水？" ↔ "我想喝牛奶" */
+const WHO_W=new Set(CATS.find(c=>c.k==='who').w.map(w=>w.h).concat(['工人']));
+const personAns=a=>/是/.test(a.h)&&a.tokens.some(t=>WHO_W.has(t));
+const clash=(x,y)=>x.fam===y.fam||x.a.h===y.a.h||(x.fam==='who'&&personAns(y.a))||(y.fam==='who'&&personAns(x.a))
+  ||(x.fam==='what'&&/工作|做什么/.test(x.q.h)&&personAns(y.a))||(y.fam==='what'&&/工作|做什么/.test(y.q.h)&&personAns(x.a))
+  ||([x.fam,y.fam].includes('state')&&[x.fam,y.fam].includes('time'))||([x.fam,y.fam].includes('choice')&&[x.fam,y.fam].includes('what'));
+const pictIn=t=>[...new Set(t.filter(x=>PSET.has(x)))];
+/* hội thoại 2 lượt và câu đơn có đúng một từ có hình */
+const DPAIRS=DLGS.flatMap(L=>L.slice(0,-1).map((l,i)=>[l,L[i+1]]).filter(([a,b])=>a.who!==b.who))
+  .map(([a,b])=>({a,b,h:a.h+b.h,key:pictIn([...a.tokens,...b.tokens])})).filter(x=>x.key.length===1).map(x=>({...x,key:x.key[0]}));
+const SENTS=[...ALLSENTS.map(s=>({h:s.h,tokens:s.tokens,p:s.p,m:s.m})),...DLGS.flat().map(l=>({h:l.h,tokens:l.tokens,p:l.p,m:l.m})),
+  ...(window.EXAM_SENT||[]).map(x=>{const l=ln('',x);return {h:l.h,tokens:l.tokens,p:l.p,m:l.m}})]
+  .filter((s,i,a)=>a.findIndex(x=>x.h===s.h)===i);
+const SPIC=SENTS.map(s=>({...s,key:pictIn(s.tokens)})).filter(s=>s.key.length===1).map(s=>({...s,key:s.key[0]}));
+/* câu trần thuật đứng được một mình (bỏ câu trả lời cụt như "没有，…", "在前边…") */
+const STATE=SENTS.filter(s=>!/？/.test(s.h)&&!/^(没有|不|是|对|好|有|在|嗯|那|去过)/.test(s.h)).flatMap(s=>CATS.map(c=>{const hit=[...new Set(s.tokens.filter(t=>c.w.some(w=>w.h===t)))];return hit.length===1?{s,c,key:WMAP.get(hit[0])}:null}).filter(Boolean));
+
+function pickDis(ans,pool,n,bad){const out=[];
+  for(const x of shuffle([...pool])){if(out.length>=n)break;
+    if(x.h===ans.h||x.m===ans.m||share(x.h,ans.h)||out.some(o=>o.h===x.h||o.m===x.m||share(o.h,x.h))||(bad&&bad(x)))continue;out.push(x)}
+  return out}
+/* chọn 5 mục + 1 hình thừa sao cho hình của mục khác không dính chữ nào với nội dung của mục đang xét */
+function bankPart(pool,used,avoid){
+  for(let t=0;t<300;t++){
+    const items=[],keys=[];
+    for(const it of shuffle(pool.filter(x=>!used.has(x.h)&&!avoid.has(x.key)))){
+      if(items.length>=5)break;
+      if(keys.includes(it.key)||keys.some(k=>share(k,it.h))||items.some(o=>share(it.key,o.h)))continue;
+      items.push(it);keys.push(it.key)}
+    if(items.length<5)continue;
+    const ex=shuffle([...PKEY]);
+    const extra=ex.find(w=>!keys.includes(w.h)&&!avoid.has(w.h)&&!keys.some(k=>share(k,w.h))&&!items.some(o=>share(w.h,o.h)))
+      ||ex.find(w=>!keys.includes(w.h)&&!keys.some(k=>share(k,w.h))&&!items.some(o=>share(w.h,o.h)));
+    if(!extra)continue;
+    items.forEach(o=>used.add(o.h));
+    return {items,bank:shuffle([...keys.map(k=>WMAP.get(k)),extra])};
+  }
+  return null;
+}
+const hopt=s=>({h:s.h,p:s.p||''});
+function buildHsk(){
+  const Q=[],used=new Set(),usedW=new Set();
+  const push=(sec,part,type,o)=>Q.push({sec,part,type,...o});
+  /* Nghe P1: nghe một từ, chọn 1 trong 3 hình */
+  shuffle([...PICT]).slice(0,5).forEach(w=>{usedW.add(w.h);
+    push('l',1,'Nghe, chọn hình đúng',{audio:w.h,word:w.h,kind:'pic3',opts:shuffle([w,...pickDis(w,PICT,2)]).map(x=>({pic:x.h,ok:x.h===w.h})),
+      exp:`${w.h} · ${pyPlain(w.p)} · ${w.m}`})});
+  /* Nghe P2: nghe câu hỏi, chọn câu trả lời (3 lựa chọn, câu trả lời nhiễu thuộc loại câu hỏi khác) */
+  shuffle(QA).slice(0,5).forEach(x=>{used.add(x.q.h);
+    const ds=[];for(const y of shuffle(QA)){if(ds.length>=2)break;if(!clash(x,y)&&!ds.some(d=>d.fam===y.fam||d.a.h===y.a.h))ds.push(y)}
+    push('l',2,'Nghe câu hỏi, chọn câu trả lời',{audio:x.q.h,kind:'txt',opts:shuffle([{...hopt(x.a),ok:true},...ds.map(d=>({...hopt(d.a),ok:false}))]),
+      exp:`${x.q.h} ${x.q.p} → ${x.a.h} ${x.a.p}`})});
+  /* Nghe P3: nghe hội thoại, chọn hình A–F */
+  const p3=bankPart(DPAIRS,used,usedW);
+  if(p3){p3.items.forEach(x=>{used.add(x.a.h);used.add(x.b.h);usedW.add(x.key);
+    push('l',3,'Nghe hội thoại, chọn hình',{audio:x.a.h+' '+x.b.h,word:x.key,kind:'bank',bank:p3.bank,txt:x.h,opts:p3.bank.map(w=>({pic:w.h,ok:w.h===x.key})),
+      exp:`${x.a.who}: ${x.a.h} ${x.a.p} (${x.a.m}) · ${x.b.who}: ${x.b.h} ${x.b.p} (${x.b.m})`})})}
+  /* Nghe P4: nghe một đoạn + câu hỏi, chọn 1 trong 3 */
+  const state=shuffle(STATE), p4=[];
+  for(const x of state){if(p4.length>=5)break;if(used.has(x.s.h)||p4.filter(z=>z.c.k===x.c.k).length>=2)continue;p4.push(x);used.add(x.s.h)}
+  p4.forEach(x=>{const ds=pickDis(x.key,x.c.w,2,w=>x.s.tokens.includes(w.h)||x.s.h.includes(w.h));
+    push('l',4,'Nghe một đoạn và câu hỏi, chọn đáp án',{audio:`${x.s.h} 问：${x.c.q}`,word:x.key.h,kind:'txt',stem:x,
+      opts:shuffle([x.key,...ds]).map(w=>({h:w.h,p:w.p,ok:w.h===x.key.h})),exp:`${x.s.h} ${x.s.p} (${x.s.m}) · 问：${x.c.q} → ${x.key.h} (${x.key.m})`})});
+  /* Đọc P1: câu nối với hình A–F */
+  const r1=bankPart(SPIC,used,new Set());
+  if(r1){r1.items.forEach(x=>{used.add(x.h);
+    push('r',1,'Đọc câu, chọn hình',{q:x,word:x.key,kind:'bank',bank:r1.bank,txt:x.h,opts:r1.bank.map(w=>({pic:w.h,ok:w.h===x.key})),exp:`${x.h} · ${x.m}`})})}
+  /* Đọc P2: nối câu hỏi với câu trả lời A–F (6 cặp thuộc 6 loại câu hỏi khác nhau) */
+  for(let t=0;t<200;t++){const pick=[];
+    for(const x of shuffle(QA.filter(x=>!used.has(x.q.h)))){if(pick.length>=6)break;if(!pick.some(o=>clash(o,x)))pick.push(x)}
+    if(pick.length<6)continue;
+    const bank=shuffle(pick.map(x=>x.a));
+    pick.slice(0,5).forEach(x=>{used.add(x.q.h);
+      push('r',2,'Nối câu hỏi với câu trả lời',{q:x.q,kind:'bankt',bank,opts:bank.map(a=>({h:a.h,p:a.p,ok:a===x.a})),exp:`${x.q.h} → ${x.a.h} · ${x.m}`})});
+    break}
+  /* Đọc P3: chọn từ điền vào chỗ trống, 6 từ A–F thuộc 6 nhóm khác nhau */
+  for(let t=0;t<300;t++){
+    const items=[],cats=new Set();
+    for(const s of shuffle(ALLSENTS.filter(s=>!used.has(s.h)))){
+      if(items.length>=5)break;
+      const cand=s.tokens.map((x,i)=>[x,i]).filter(([x,i])=>FILLCAT.has(x)&&!cats.has(FILLCAT.get(x))&&s.tokens.filter(y=>y===x).length===1
+        &&i>0&&!OPEN_PREV.has(s.tokens[i-1])&&!OPEN_NEXT.has(s.tokens[i+1])
+        /* ngay sau đại từ, cả danh từ lẫn từ chỉ thời gian đều đặt được (我爸爸是… / 我晚上是…) */
+        &&!(PRON.has(s.tokens[i-1])&&['noun','time'].includes(FILLCAT.get(x)))
+        /* trước 点/岁/个…, sau 星期: số và từ để hỏi (七 / 几) đều đặt được */
+        &&!(['number','qword'].includes(FILLCAT.get(x))&&(NUMSLOT.has(s.tokens[i+1])||s.tokens[i-1]==='星期')));
+      if(!cand.length)continue;
+      const [x,i]=cand[rand(cand.length)];
+      if(items.some(o=>o.s.h.includes(x)||s.h.includes(o.w.h)))continue;
+      items.push({s,w:WMAP.get(x),i});cats.add(FILLCAT.get(x))}
+    if(items.length<5)continue;
+    const extraCat=FILL.filter(c=>!cats.has(c.k));
+    const extra=shuffle(extraCat.flatMap(c=>c.w)).find(w=>!items.some(o=>o.s.h.includes(w.h)||share(w.h,o.w.h)));
+    if(!extra)continue;
+    const bank=shuffle([...items.map(o=>o.w),extra]);
+    items.forEach(o=>{used.add(o.s.h);
+      /* giữ dấu câu: tìm vị trí từng từ trong câu gốc rồi thay từ thứ i */
+      let cur=0,at=0;o.s.tokens.forEach((x,k)=>{const p=o.s.h.indexOf(x,cur);if(k===o.i)at=p;cur=p+x.length});
+      const shown=o.s.h.slice(0,at)+'（　）'+o.s.h.slice(at+o.w.h.length);
+      push('r',3,'Chọn từ điền vào chỗ trống',{q:{h:shown,p:''},word:o.w.h,kind:'bankw',bank,blank:o,opts:bank.map(w=>({h:w.h,p:w.p,ok:w.h===o.w.h})),exp:`${o.s.h} · ${o.s.p} · ${o.s.m}`})});
+    break}
+  /* Đọc P4: đọc câu + câu hỏi ★, chọn 1 trong 3 */
+  const r4=[];
+  for(const x of shuffle(STATE)){if(r4.length>=5)break;if(used.has(x.s.h)||r4.filter(z=>z.c.k===x.c.k).length>=2)continue;r4.push(x);used.add(x.s.h)}
+  r4.forEach(x=>{const ds=pickDis(x.key,x.c.w,2,w=>x.s.tokens.includes(w.h)||x.s.h.includes(w.h));
+    push('r',4,'Đọc câu, trả lời câu hỏi',{q:{h:x.s.h,p:x.s.p},star:x.c,word:x.key.h,kind:'txt',stem:x,
+      opts:shuffle([x.key,...ds]).map(w=>({h:w.h,p:w.p,ok:w.h===x.key.h})),exp:`${x.s.m} · ★ ${x.c.qv} → ${x.key.h} (${x.key.m})`})});
+  return Q;
+}
+/* kiểm tra một đề: đủ 40 câu, mỗi câu đúng một đáp án, không trùng đáp án, hình đủ, hình nhiễu không dính với nội dung */
+function checkHsk(Q){
+  const err=[],cnt={};
+  Q.forEach((q,i)=>{const id=`${q.sec==='l'?'Nghe':'Đọc'} P${q.part} câu ${i+1}`;cnt[q.sec+q.part]=(cnt[q.sec+q.part]||0)+1;
+    const ok=q.opts.filter(o=>o.ok).length; if(ok!==1)err.push(`${id}: ${ok} đáp án đúng`);
+    const keys=q.opts.map(o=>o.pic||o.h); if(new Set(keys).size!==keys.length)err.push(`${id}: đáp án trùng nhau`);
+    q.opts.forEach(o=>{if(o.pic&&!(A.EMOJI[o.pic]||[]).length)err.push(`${id}: thiếu hình ${o.pic}`)});
+    if(q.opts.some(o=>o.pic)){const em=q.opts.map(o=>(A.EMOJI[o.pic]||[]).join(''));if(new Set(em).size!==em.length)err.push(`${id}: hai hình giống nhau`)}
+    if(q.opts.length!==(q.kind==='pic3'||q.kind==='txt'?3:6))err.push(`${id}: số lựa chọn sai (${q.opts.length})`);
+    if(q.kind==='bank')q.opts.forEach(o=>{if(!o.ok&&share(o.pic,q.txt))err.push(`${id}: hình nhiễu ${o.pic} dính chữ với nội dung`)});
+    if(q.stem){if(!q.stem.s.tokens.includes(q.stem.key.h))err.push(`${id}: đáp án không có trong câu`);q.opts.forEach(o=>{if(!o.ok&&q.stem.s.h.includes(o.h))err.push(`${id}: đáp án nhiễu ${o.h} có trong câu`)})}
+    if(q.kind==='bankw')q.opts.forEach(o=>{if(!o.ok&&q.blank.s.h.includes(o.h))err.push(`${id}: từ nhiễu ${o.h} có sẵn trong câu`)});
+  });
+  for(const k of ['l1','l2','l3','l4','r1','r2','r3','r4'])if(cnt[k]!==5)err.push(`Phần ${k}: có ${cnt[k]||0} câu, cần 5`);
+  /* trong một phần nối A–F, mỗi đáp án chỉ dùng cho một câu */
+  ['l3','r1','r2','r3'].forEach(k=>{const qs=Q.filter(q=>q.sec+q.part===k),a=qs.map(q=>q.opts.findIndex(o=>o.ok));if(new Set(a).size!==a.length)err.push(`Phần ${k}: hai câu cùng một đáp án`)});
+  return err;
+}
+A.hskBuild=buildHsk; A.hskCheck=checkHsk; A.hskPools={QA,DPAIRS,SPIC,STATE,PICT};
+
+const PNAME={l1:'Nghe · Phần 1',l2:'Nghe · Phần 2',l3:'Nghe · Phần 3',l4:'Nghe · Phần 4',r1:'Đọc · Phần 1',r2:'Đọc · Phần 2',r3:'Đọc · Phần 3',r4:'Đọc · Phần 4'};
+const PDESC={l1:'Nghe, chọn hình đúng (A, B hoặc C).',l2:'Nghe câu hỏi, chọn câu trả lời đúng.',l3:'Nghe hội thoại, chọn hình phù hợp trong các hình A–F.',l4:'Nghe một đoạn và câu hỏi, chọn đáp án đúng.',
+  r1:'Đọc câu, chọn hình phù hợp trong các hình A–F.',r2:'Chọn câu trả lời phù hợp (A–F) cho mỗi câu hỏi.',r3:'Chọn từ (A–F) điền vào chỗ trống.',r4:'Đọc câu, trả lời câu hỏi ★.'};
+function hskRun(root){
+  A.cleanup();
+  let Q=buildHsk(),tries=0; while(checkHsk(Q).length&&tries++<20)Q=buildHsk();
+  const ans=new Array(Q.length).fill(-1),plays=new Array(Q.length).fill(2),dur=HSK_MIN*60; let left=dur,done=false;
+  const txt=o=>`<span class="htx"><span class="hz">${esc(o.h)}</span>${o.p?`<small>${esc(o.p)}</small>`:''}</span>`;
+  const bankHTML=q=>q.kind==='bank'?`<div class="pbank">${q.bank.map((w,k)=>`<div class="pb"><kbd>${LET[k]}</kbd>${A.pic(w.h,52)}</div>`).join('')}</div>`
+    :`<div class="tbank">${q.bank.map((w,k)=>`<div class="tb"><kbd>${LET[k]}</kbd>${txt(w)}</div>`).join('')}</div>`;
+  const qhtml=(q,i)=>{const bank=q.kind!=='pic3'&&q.kind!=='txt';
+    return `<div class="qitem" id="q${i}"><span class="qnum">Câu ${i+1}</span>
+    ${q.audio?`<div class="row l"><button class="btn sm" data-play="${i}">${ICON.spk} Nghe <span>(còn 2 lần)</span></button></div>`:''}
+    ${q.q?`<div class="qtext hq">${txt(q.q)}</div>`:''}
+    ${q.star?`<div class="qtext hq star">★ ${txt({h:q.star.q,p:q.star.qp})}</div>`:''}
+    <div class="opts ${q.kind==='pic3'?'pics':bank?'letters':'one'}">${q.opts.map((o,k)=>`<button class="opt" data-q="${i}" data-k="${k}" aria-label="${LET[k]}"><kbd>${LET[k]}</kbd>${bank?'':`<span>${o.pic?A.pic(o.pic,64):txt(o)}</span>`}</button>`).join('')}</div>
+    <div class="qexp" id="x${i}"></div></div>`};
+  const parts=['l1','l2','l3','l4','r1','r2','r3','r4'];
+  root.innerHTML=`<div class="exhead"><b>Đề mô phỏng dạng HSK 1</b><span class="meta" id="eprog">Đã làm 0/40</span><span class="clock" id="eclock">${HSK_MIN}:00</span><button class="btn primary sm" id="esub">Nộp bài</button></div>
+    <p class="meta" style="margin:6px 0 0">Đề luyện tập nội bộ mô phỏng dạng câu của đề HSK 1 mới, không phải đề thi chính thức.</p>
+    ${parts.map((k,pi)=>{const qs=Q.map((q,i)=>[q,i]).filter(([q])=>q.sec+q.part===k);if(!qs.length)return '';
+      return `${pi===0?'<h3 class="sect2">一、听力 · Nghe</h3>':pi===4?'<h3 class="sect2">二、阅读 · Đọc</h3>':''}
+      <div class="hpart"><h4 class="eyebrow">${PNAME[k]} (câu ${qs[0][1]+1}–${qs[qs.length-1][1]+1})</h4><p class="meta">${PDESC[k]}</p>
+      ${qs[0][0].bank?bankHTML(qs[0][0]):''}<div class="qlist">${qs.map(([q,i])=>qhtml(q,i)).join('')}</div></div>`}).join('')}
+    <div class="row" style="margin-top:20px"><button class="btn primary" id="esub2">Nộp bài</button></div><div id="eres"></div>`;
+  window.scrollTo(0,0);
+  $$('[data-play]',root).forEach(b=>b.onclick=()=>{const i=+b.dataset.play;if(done||plays[i]<=0)return;plays[i]--;
+    b.querySelector('span').textContent=plays[i]?`(còn ${plays[i]} lần)`:'(hết lượt nghe)';speak(Q[i].audio,false,b);if(!plays[i])b.disabled=true});
+  $$('.opt',root).forEach(b=>b.onclick=()=>{if(done)return;const i=+b.dataset.q;ans[i]=+b.dataset.k;
+    $$(`.opt[data-q="${i}"]`,root).forEach(x=>x.classList.toggle('sel',x===b));
+    $('#eprog').textContent=`Đã làm ${ans.filter(a=>a>=0).length}/40`});
+  const clock=$('#eclock');
+  A.addTimer(setInterval(()=>{if(done)return;left--;clock.textContent=`${String(Math.floor(left/60)).padStart(2,'0')}:${String(left%60).padStart(2,'0')}`;clock.classList.toggle('low',left<300);if(left<=0)submit(true)},1000));
+  let confirmT=0;
+  const trySubmit=e=>{const blank=ans.filter(a=>a<0).length;
+    if(blank&&Date.now()-confirmT>4000){confirmT=Date.now();e.currentTarget.textContent=`Còn ${blank} câu trống, bấm lần nữa để nộp`;return}
+    submit(false)};
+  $('#esub').onclick=trySubmit; $('#esub2').onclick=trySubmit;
+  function submit(timeout){
+    if(done)return; done=true; A.cleanup(); A.stopSpeak?A.stopSpeak():('speechSynthesis' in window&&speechSynthesis.cancel());
+    const pc={};let l=0,r=0;
+    Q.forEach((q,i)=>{const k=q.sec+q.part,ok=ans[i]>=0&&q.opts[ans[i]].ok;pc[k]=(pc[k]||0)+(ok?1:0);
+      if(ok){q.sec==='l'?l++:r++} else if(q.word&&ans[i]>=0&&A.srs)A.srs.flag(q.word);
+      $('#q'+i).classList.add(ok?'right':'wrong');
+      $$(`.opt[data-q="${i}"]`,root).forEach((b,k)=>{b.disabled=true;if(q.opts[k].ok)b.classList.add('ok');else if(k===ans[i])b.classList.add('bad')});
+      $$(`[data-play="${i}"]`,root).forEach(b=>{b.disabled=false;b.querySelector('span').textContent='(nghe lại)';b.onclick=()=>speak(q.audio,false,b)});
+      $('#x'+i).innerHTML=`${ok?'<b style="color:var(--ok)">Đúng</b>':ans[i]<0?'<b style="color:var(--cinnabar)">Bỏ trống</b>':'<b style="color:var(--cinnabar)">Sai</b>'} · Đáp án ${LET[q.opts.findIndex(o=>o.ok)]} · ${esc(q.exp)}`;
+    });
+    const s=(l+r)*5,pass=s>=HSK_PASS;
+    S.exams=(S.exams||[]).concat({d:new Date().toLocaleString('vi-VN',{dateStyle:'short',timeStyle:'short'}),l,r,s,mode:'hsk',max:HSK_MAX,pass:HSK_PASS,parts:parts.map(k=>pc[k]||0)}).slice(-30); save();
+    A.addXP(10+(l+r),'Đề mô phỏng dạng HSK 1',`${s}/${HSK_MAX} điểm · Nghe ${l*5}/100 · Đọc ${r*5}/100`);
+    $('#eres').innerHTML=`<div class="result" style="margin-top:24px"><div class="seal ${pass?'':'long'}">${pass?'合格':'加油'}</div>
+      <h2>${s} / ${HSK_MAX} điểm</h2><p class="gloss">${timeout?'Hết giờ, bài đã được nộp. ':''}${pass?'Đạt (từ 120 điểm)':'Chưa đạt (cần 120 điểm), cố lên nhé'}</p>
+      <div class="rstats"><div><b>${l*5}/100</b><small>Nghe</small></div><div><b>${r*5}/100</b><small>Đọc</small></div></div>
+      <div class="hsk-parts">${parts.map(k=>`<div><span>${PNAME[k]}</span><b>${(pc[k]||0)*5}/25</b></div>`).join('')}</div>
+      <p class="meta">Thang điểm tạm theo đề HSK 1 cũ (đề mới chưa công bố thang điểm). Đây là đề luyện tập, không phải đề thi chính thức.</p>
+      <div class="row"><button class="btn primary" id="eagain">Làm đề mới</button><button class="btn" id="ehome">Xem lịch sử</button></div></div>`;
+    $('#esub').disabled=true; $('#esub2').hidden=true;
+    $('#eagain').onclick=()=>hskRun(root); $('#ehome').onclick=()=>examHome(root);
+    $('#eres').scrollIntoView({block:'start'});
+    A.toast(`Bạn được ${s}/${HSK_MAX} điểm. Kéo xuống để xem từng câu.`);
   }
 }
 
