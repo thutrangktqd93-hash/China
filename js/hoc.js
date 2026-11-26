@@ -110,7 +110,9 @@ function startFlash(extraNew){
     </div>`;
     bindFlashHead();
     const card=$('#fcard');
-    const flip=()=>{if(flipped)return;flipped=true;card.classList.add('flip');$('#fact').hidden=true;$('#frate').hidden=false;speak(w.h)};
+    /* điện thoại: cuộn để thẻ nằm trên hàng nút đánh giá ghim ở cuối màn hình (chạy sau khi trang cuộn về đầu) */
+    const keep=()=>A.addTimer(setTimeout(()=>{if(window.innerWidth>600||!card.isConnected)return;const r=card.getBoundingClientRect();if(r.top<8||r.bottom>window.innerHeight-170)window.scrollBy({top:r.top-12,behavior:'auto'})},60));
+    const flip=()=>{if(flipped)return;flipped=true;card.classList.add('flip');$('#fact').hidden=true;$('#frate').hidden=false;speak(w.h);keep()};
     card.onclick=e=>{if(e.target.closest('.say'))return; if(!flipped)flip(); else card.classList.toggle('flip')};
     $('#fsay').onclick=$('#fsay2').onclick=e=>{e.stopPropagation();speak(w.h)};
     const exs=$('#fexsay'); if(exs)exs.onclick=e=>{e.stopPropagation();speak(ex.h,false,exs)};
@@ -122,6 +124,7 @@ function startFlash(extraNew){
       if(e.code==='Space'){e.preventDefault();flip()}
       else if(flipped&&['1','2','3','4'].includes(e.key))rate(R.RATINGS[+e.key-1]);
     });
+    keep();
     if(hv)speak(w.h);
   }
   function rate(r){

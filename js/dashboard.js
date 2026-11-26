@@ -207,7 +207,9 @@ function pathBlock(){
 function weakBlock(){
   const ww=R().weakWords(5), tc=toneConfusions().slice(0,3), pw=pairWeak().slice(0,3), ws=weakSentences().slice(0,3), uw=unitWeak().slice(0,3);
   const empty='<p class="meta">Chưa đủ dữ liệu. Làm thêm bài luyện để web biết bạn yếu ở đâu.</p>';
-  const box=(title,body,btn,id)=>`<div class="wcardx"><h3>${title}</h3>${body}${btn?`<button class="btn sm" data-weak="${id}" type="button">${btn}</button>`:''}</div>`;
+  if(!ww.length&&!tc.length&&!pw.length&&!ws.length&&!uw.length)return `<section class="dsec"><h2 class="eyebrow">Điểm cần cải thiện</h2><p class="note">Chưa đủ dữ liệu. Khi bạn ôn flashcard, nghe đoán thanh, phân biệt cặp âm và làm bài nghe, web sẽ chỉ ra từ hay quên, thanh điệu hay nhầm, cặp âm, câu nghe sai và bài sai nhiều để bạn luyện lại.</p></section>`;
+  /* chỉ hiện những mục đã có dữ liệu */
+  const box=(title,body,btn,id)=>body===empty?'':`<div class="wcardx"><h3>${title}</h3>${body}${btn?`<button class="btn sm" data-weak="${id}" type="button">${btn}</button>`:''}</div>`;
   return `<section class="dsec"><h2 class="eyebrow">Điểm cần cải thiện</h2><div class="wgridx">
     ${box('Từ hay quên',ww.length?`<ul>${ww.map(w=>{const c=S.review[w.h];return `<li><span class="hz">${w.h}</span> ${esc(A.pyPlain(w.p))} · ${esc(w.m)} <small>quên ${c.lapses||0}, sai ${c.flagged||0}</small></li>`}).join('')}</ul>`:empty,ww.length?'Ôn các từ này':'','words')}
     ${box('Thanh điệu hay nhầm',tc.length?`<ul>${tc.map(x=>`<li>Thanh ${x.a} → nhầm thành thanh ${x.b} <small>${x.n} lần</small></li>`).join('')}</ul>`:empty,tc.length?'Luyện nghe thanh':'','tone')}

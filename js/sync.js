@@ -154,4 +154,6 @@ A.SY=SY;
 A.syncWipe=async()=>{if(SY.user){clearTimeout(pushT);await docRef().delete()}};
 
 init();
+/* sync.js tải sau (defer): nếu đang ở trang Lịch sử thì vẽ lại để hiện khung đồng bộ */
+if((location.hash||'')==='#lichsu')A.route();
 })();
