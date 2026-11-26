@@ -459,8 +459,8 @@ function gramView(root,tab){
   $('#gtabs').onclick=e=>{const b=e.target.closest('.tab');if(b)gramView(root,b.dataset.t)};
   const M=$('#gmain'); A.setMain(M);
   if(tab==='g'){
-    M.innerHTML=`<div class="gpoints">${window.GRAMMAR.map((g,i)=>`<div class="gp"><h3>${i+1}. ${esc(g.t)}</h3><span class="f">${esc(g.f)}</span><p>${esc(g.d)}</p>
-      <ul>${g.ex.map(([h,m])=>`<li><button class="btn sm" data-h="${esc(h)}" style="padding:2px 8px;margin-right:6px">${ICON.spk}</button><span class="hz">${esc(h)}</span> — ${esc(m)}</li>`).join('')}</ul></div>`).join('')}</div>`;
+    /* "học ở Bài N": bài được gán tự động trong js/grammar.js, bấm để mở tab Ngữ pháp của bài đó */
+    M.innerHTML=`<div class="gpoints">${A.gram.list.map(x=>A.gram.card(x,{num:x.i+1,unitLink:true})).join('')}</div>`;
   } else if(tab==='m'){
     M.innerHTML=`<div class="tscroll"><table class="mtable"><thead><tr><th>Lượng từ</th><th>Dùng cho</th><th>Ví dụ</th></tr></thead><tbody>
       ${window.MEASURE.map(([h,p,u,ex])=>`<tr><td><button class="btn sm" data-h="${h}"><span class="hz" style="font-size:20px">${h}</span> ${p}</button></td><td>${esc(u)}</td><td><span class="hz" style="font-size:17px;font-weight:700;cursor:pointer" data-h="${esc(ex.replace(/ · /g,'，'))}">${esc(ex)}</span></td></tr>`).join('')}

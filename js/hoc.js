@@ -13,6 +13,7 @@ function build(){
       <nav class="tabs" id="tabs">
         <button class="tab" data-tab="vocab">Từ vựng</button><button class="tab" data-tab="flash">Flashcard</button>
         <button class="tab" data-tab="game">Trò chơi</button><button class="tab" data-tab="listen">Luyện nghe</button>
+        <button class="tab" data-tab="gram" id="tgram">Ngữ pháp</button>
       </nav><div id="hmain"></div></section></div>`;
   HM=$('#hmain'); A.setMain(HM);
   $('#ulist').onclick=e=>{const b=e.target.closest('.li');if(!b)return;S.unit=+b.dataset.u;save();A.cleanup();renderUnits();renderTab();b.scrollIntoView({block:'nearest',inline:'nearest'})};
@@ -31,10 +32,30 @@ function renderUnits(){
   $('#prev').checked=S.prev; $('#prev').disabled=S.unit===1;
   A.renderStats();
 }
+const unitGram=()=>A.gram?A.gram.forUnit(S.unit):[];
 function renderTab(){
   A.setMain(HM);
+  /* bài không có điểm ngữ pháp thì ẩn tab Ngữ pháp */
+  const hasG=unitGram().length>0; $('#tgram').hidden=!hasG;
+  if(S.tab==='gram'&&!hasG)S.tab='vocab';
   $$('.tab',root).forEach(t=>t.classList.toggle('on',t.dataset.tab===S.tab));
-  ({vocab:renderVocab,flash:startFlash,game:renderGames,listen:renderListen}[S.tab]||renderVocab)();
+  ({vocab:renderVocab,flash:startFlash,game:renderGames,listen:renderListen,gram:renderGram}[S.tab]||renderVocab)();
+}
+
+/* ---------- ngữ pháp của bài (điểm ngữ pháp được gán tự động trong js/grammar.js) ---------- */
+function renderGram(){
+  A.cleanup();
+  const list=unitGram(), u=unit(), qs=list.flatMap(x=>x.g.q.map(q=>({g:x.g,q}))), done=(S.done||{})[`gram-${u.n}`]>0;
+  HM.innerHTML=`<p class="lead" style="margin-top:4px">Các điểm ngữ pháp xuất hiện lần đầu trong bài ${u.n}: mọi từ trong công thức và ví dụ đều đã có ở bài này hoặc các bài trước.</p>
+    <div class="gpoints">${list.map(x=>A.gram.card(x)).join('')}</div>
+    <div class="sec"><h3>Bài tập ngữ pháp bài ${u.n}</h3><p class="meta">${qs.length} câu chọn từ điền vào chỗ trống.${done?' Bạn đã làm bài tập này.':''}</p>
+    <div class="row l"><button class="btn primary" id="gstart">${done?'Làm lại bài tập':'Làm bài tập'}</button><a class="btn" href="#nguphap">Xem toàn bộ ngữ pháp</a></div></div>`;
+  $$('[data-h]',HM).forEach(b=>b.onclick=()=>speak(b.dataset.h,false,b));
+  $('#gstart').onclick=gramQuiz;
+}
+function gramQuiz(){
+  const list=unitGram(), items=shuffle(list.flatMap(x=>x.g.q.map(q=>({g:x.g,q}))));
+  A.runMC({key:'gram',title:`Ngữ pháp bài ${S.unit}`,rounds:A.gram.rounds(items),replay:gramQuiz,back:renderGram,backLabel:'Về tab Ngữ pháp'});
 }
 const toTab=t=>()=>{S.tab=t;save();A.cleanup();if('speechSynthesis' in window)speechSynthesis.cancel();renderTab()};
 
@@ -45,11 +66,13 @@ function renderVocab(){
   <div class="wgrid">${u.words.map((w,i)=>`<button class="wcard" data-i="${i}">${pic(w.h,40)}<span class="hz">${w.h}</span>${pyHTML(w.p)}<span class="mn">${esc(w.m)}</span>
     <span class="dots" title="Mức ghi nhớ">${[1,2,3,4].map(k=>`<i class="${box(w)>=k?'f':''}"></i>`).join('')}</span></button>`).join('')}</div>
   <div class="sec"><h3>Câu mẫu</h3><div class="slist">${u.sents.map((s,i)=>`<div class="srow"><button class="say" data-s="${i}" aria-label="Nghe câu">${ICON.spk}</button>
-    <span class="hz">${s.h}</span><span class="sp">${esc(s.p)}</span><span class="sm">${esc(s.m)}</span></div>`).join('')}</div></div>
+    <span class="hz">${s.h}</span><span class="sp">${esc(s.p)}</span><span class="sm">${esc(s.m)}</span></div>`).join('')}</div>
+    ${unitGram().length?`<p class="glink">Ngữ pháp trong bài này: ${unitGram().map(x=>`<button class="linkbtn" data-gt="1">${esc(x.g.t)}</button>`).join(', ')}</p>`:''}</div>
   <div class="row" style="margin-top:24px"><button class="btn primary" id="gof">Học bằng flashcard</button><button class="btn" id="gog">Chơi game ôn từ</button><a class="btn" href="#viet">Luyện viết bài này</a></div>`;
   $$('.wcard',HM).forEach(b=>b.onclick=()=>speak(u.words[b.dataset.i].h));
   $$('[data-s]',HM).forEach(b=>b.onclick=()=>speak(u.sents[b.dataset.s].h,false,b));
   $('#gof').onclick=toTab('flash'); $('#gog').onclick=toTab('game');
+  $$('[data-gt]',HM).forEach(b=>b.onclick=toTab('gram'));
 }
 
 /* ---------- flashcard: ôn tập cách quãng (SRS, xem js/srs.js) ---------- */

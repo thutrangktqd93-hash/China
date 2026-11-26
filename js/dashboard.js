@@ -53,6 +53,9 @@ function unitSteps(n){
   const steps=[
     {k:'vocab',t:`Học từ mới bài ${n} bằng flashcard`,detail:`${intro}/${ws.length} từ đã học`,done:intro===ws.length,
       route:'hoc',prep:()=>{S.unit=n;S.tab='flash';S.fscope='unit';S.prev=false}},
+    /* chỉ bài có điểm ngữ pháp (js/grammar.js); xong khi đã làm bài tập ngữ pháp của bài (S.done['gram-n']) */
+    ...(A.gram&&A.gram.forUnit(n).length?[{k:'gram',t:`Ngữ pháp bài ${n}`,detail:A.gram.forUnit(n).map(x=>x.g.t).join(' · '),done:d('gram'),
+      route:'hoc',prep:()=>{S.unit=n;S.tab='gram';S.prev=false}}]:[]),
     {k:'lword',t:`Nghe từ bài ${n}`,detail:'Nghe rồi chọn chữ Hán đúng',done:d('lword'),route:'hoc',prep:()=>{S.unit=n;S.tab='listen';S.prev=false},auto:['listen','lword']},
     {k:'lsent',t:`Nghe hiểu câu mẫu bài ${n}`,detail:`${u.sents.length} câu mẫu`,done:d('lsent'),route:'hoc',prep:()=>{S.unit=n;S.tab='listen';S.prev=false},auto:['listen','lsent']},
     {k:'lorder',t:`Ghép từ thành câu bài ${n}`,detail:'Nghe và xếp câu đúng thứ tự',done:d('lorder'),route:'hoc',prep:()=>{S.unit=n;S.tab='listen';S.prev=false},auto:['listen','lorder']},
@@ -187,7 +190,7 @@ function overviewBlock(){
 function pathBlock(){
   const o=overview(), py=pinyinSteps(), pyN=py.filter(s=>s.done).length;
   const d=S.done||{}, cnt=p=>UNITS.filter(u=>d[`${p}-${u.n}`]>0).length;
-  const gram=Object.keys(d).filter(k=>/^(gq|mq|oq)-/.test(k)).length;
+  const gram=Object.keys(d).filter(k=>/^(gq|mq|oq|gram)-/.test(k)).length;
   const spoke=Object.keys(S.speak||{}).length, wrote=Object.keys(S.wrote||{}).length;
   const chars=new Set(ALLWORDS.flatMap(w=>[...w.h])).size;
   /* điểm quy về thang 100 (đề mô phỏng HSK chấm trên 200) */

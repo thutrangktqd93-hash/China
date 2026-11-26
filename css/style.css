@@ -753,3 +753,9 @@ select{font:inherit;color:var(--ink);background:var(--surface);border:1px solid 
   .tbank{grid-template-columns:1fr}
   .opts.letters{grid-template-columns:repeat(3,minmax(0,1fr))}
 }
+
+/* ---------- Ngữ pháp trong bài học ---------- */
+.gunit{font-family:var(--f-body);font-size:12px;font-weight:700;color:var(--jade);background:var(--jade-soft);border-radius:99px;padding:2px 9px;margin-left:6px;text-decoration:none;white-space:nowrap;vertical-align:middle}
+.gunit:hover{text-decoration:underline}
+.glink{margin:14px 0 0;font-size:14px;color:var(--muted)}
+.glink .linkbtn{background:none;border:0;padding:0;color:var(--jade);font-weight:600;text-decoration:underline;text-underline-offset:3px}
