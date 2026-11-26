@@ -21,7 +21,7 @@ try{Object.assign(S,JSON.parse(localStorage.getItem(KEY)||'{}'))}catch(e){}
 if(!UNITS[S.unit-1])S.unit=1;
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){} if(W.onAppSave)W.onAppSave()}
 
-const $=s=>document.querySelector(s);
+const $=(s,el=document)=>el.querySelector(s);
 const $$=(s,el=document)=>[...el.querySelectorAll(s)];
 const box=w=>S.box[w.h]||0;
 const unit=()=>UNITS[S.unit-1];
@@ -324,21 +324,57 @@ function unitSelect(onChange){
 }
 
 /* ---------- router ---------- */
-const ROUTES={}, NAV=[
-  ['home','Trang chủ'],['hoc','Học từ vựng'],['mua','Mưa từ vựng'],['viet','Luyện viết'],['pinyin','Pinyin'],
-  ['noi','Luyện nói'],['shadow','Shadowing'],['hoithoai','Hội thoại'],['nguphap','Ngữ pháp'],['bothu','Bộ thủ'],['thi','Kiểm tra'],['lichsu','Lịch sử']];
+/* Menu 5 nhóm. Địa chỉ #hash của từng trang giữ nguyên.
+   Nhóm chỉ có một trang (Trang chủ, Tiến độ) là liên kết thẳng; nhóm nhiều trang mở danh sách khi bấm.
+   Máy tính: một hàng trên đầu trang, danh sách thả xuống. Điện thoại (< 768px): thanh cố định cuối màn hình, bảng mục con. */
+const ROUTES={}, NAVG=[
+  {g:'home',l:'Trang chủ',s:'Trang chủ',ic:'首',items:[['home','Trang chủ']]},
+  {g:'hocg',l:'Học',s:'Học',ic:'学',items:[['pinyin','Pinyin'],['hoc','Học từ vựng'],['nguphap','Ngữ pháp']]},
+  {g:'luyen',l:'Luyện',s:'Luyện',ic:'练',items:[['mua','Mưa từ vựng'],['viet','Luyện viết'],['noi','Luyện nói'],['shadow','Shadowing'],['hoithoai','Hội thoại']]},
+  {g:'tra',l:'Tra cứu & kiểm tra',s:'Tra cứu',ic:'查',items:[['bothu','Bộ thủ'],['thi','Kiểm tra']]},
+  {g:'tiendo',l:'Tiến độ',s:'Tiến độ',ic:'进',items:[['lichsu','Lịch sử']]}];
+const NAV=NAVG.flatMap(x=>x.items);
+function navHTML(){
+  const lab=x=>`<span class="ngic hz" aria-hidden="true">${x.ic}</span><span class="ngl"><span class="navl">${esc(x.l)}</span><span class="navs">${esc(x.s)}</span></span>`;
+  return `<div class="navshade" hidden></div><ul class="navbar">${NAVG.map(x=>x.items.length===1
+    ?`<li class="ng" data-g="${x.g}"><a class="ngbtn" href="#${x.items[0][0]}" data-r="${x.items[0][0]}" aria-label="${esc(x.l)}">${lab(x)}</a></li>`
+    :`<li class="ng" data-g="${x.g}"><button class="ngbtn" type="button" aria-expanded="false" aria-controls="ngm-${x.g}">${lab(x)}<span class="caret" aria-hidden="true"></span></button>
+      <ul class="ngmenu" id="ngm-${x.g}" hidden><li class="ngcap" aria-hidden="true">${esc(x.l)}</li>${x.items.map(([r,l])=>`<li><a href="#${r}" data-r="${r}">${esc(l)}</a></li>`).join('')}</ul></li>`).join('')}</ul>`;
+}
+function navClose(focusBtn){
+  const nav=$('#nav'); if(!nav)return;
+  $$('.ngbtn[aria-expanded="true"]',nav).forEach(b=>{b.setAttribute('aria-expanded','false');$('#'+b.getAttribute('aria-controls')).hidden=true;if(focusBtn)b.focus()});
+  $('.navshade',nav).hidden=true; nav.classList.remove('open');
+}
+function navOpen(btn){
+  navClose(); btn.setAttribute('aria-expanded','true'); $('#'+btn.getAttribute('aria-controls')).hidden=false;
+  const nav=$('#nav'); $('.navshade',nav).hidden=false; nav.classList.add('open');
+}
+function navBind(){
+  const nav=$('#nav');
+  nav.addEventListener('click',e=>{
+    const b=e.target.closest('button.ngbtn');
+    if(b){b.getAttribute('aria-expanded')==='true'?navClose():navOpen(b);return}
+    if(e.target.closest('a')||e.target.closest('.navshade'))navClose();
+  });
+  document.addEventListener('click',e=>{if(!nav.contains(e.target))navClose()});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&nav.classList.contains('open')){navClose(true)}});
+  /* Tab ra khỏi nhóm đang mở thì đóng danh sách */
+  nav.addEventListener('focusout',e=>{const t=e.relatedTarget;if(!t)return;const g=$('.ngbtn[aria-expanded="true"]',nav);if(g&&!g.parentNode.contains(t))navClose()});
+}
 function register(name,fn){ROUTES[name]=fn}
 function route(){
   cleanup(); stopListen(); if('speechSynthesis' in W)speechSynthesis.cancel();
   let name=(location.hash||'#home').slice(1); if(!ROUTES[name])name='home';
-  $$('#nav a').forEach(a=>a.classList.toggle('on',a.dataset.r===name));
-  const on=$(`#nav a[data-r="${name}"]`); if(on)on.scrollIntoView({block:'nearest',inline:'nearest'});
+  navClose();
+  $$('#nav a').forEach(a=>{const on=a.dataset.r===name;a.classList.toggle('on',on);on?a.setAttribute('aria-current','page'):a.removeAttribute('aria-current')});
+  $$('#nav .ng').forEach(li=>li.classList.toggle('on',!!$(`a[data-r="${name}"]`,li)));
   const root=$('#root'); root.innerHTML=''; MAIN=root;
   ROUTES[name](root);
   window.scrollTo(0,0);
 }
 function start(){
-  $('#nav').innerHTML=NAV.map(([r,l])=>`<a href="#${r}" data-r="${r}">${l}</a>`).join('');
+  $('#nav').innerHTML=navHTML(); navBind();
   renderStats();
   W.addEventListener('hashchange',route);
   route();
