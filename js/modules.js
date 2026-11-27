@@ -219,8 +219,8 @@ function pinyinView(root,tab){
   const M=$('#pmain'); A.setMain(M);
   if(tab==='tone'){
     M.innerHTML=`<div class="tgrid">${P.tones.map(t=>`<div class="tcard"><span class="tm t${t.t}">${t.mark}</span><b>${t.name} <span class="meta">${t.shape}</span></b><p>${t.tip}</p>
-      <div class="exs">${t.ex.map(e=>`<button class="btn sm" data-h="${e[0]}"><span class="hz">${e[0]}</span> ${e[1]}</button>`).join('')}</div></div>`).join('')}</div>
-      <div class="sec"><h3>Nghe 4 thanh trên cùng một âm</h3><div class="slist">${P.sets.map(s=>`<div class="srow" style="grid-template-columns:repeat(4,minmax(0,1fr))">${s.map(([h,p])=>`<button class="btn sm" data-h="${h}"><span class="hz">${h}</span> <span class="t${toneOf(p)}" style="font-weight:700">${p}</span></button>`).join('')}</div>`).join('')}</div></div>
+      <div class="exs">${t.ex.map(e=>`<button class="btn sm" data-h="${e[0]}" data-p="${e[1]}"><span class="hz">${e[0]}</span> ${e[1]}</button>`).join('')}</div></div>`).join('')}</div>
+      <div class="sec"><h3>Nghe 4 thanh trên cùng một âm</h3><div class="slist">${P.sets.map(s=>`<div class="srow" style="grid-template-columns:repeat(4,minmax(0,1fr))">${s.map(([h,p])=>`<button class="btn sm" data-h="${h}" data-p="${p}"><span class="hz">${h}</span> <span class="t${toneOf(p)}" style="font-weight:700">${p}</span></button>`).join('')}</div>`).join('')}</div></div>
       <div class="sec"><h3>Quy tắc biến điệu</h3><div class="gp"><ul>
         <li>Hai thanh 3 đi liền: thanh 3 đầu đọc thành thanh 2. <span class="hz">你好</span> nǐ hǎo → ní hǎo.</li>
         <li><span class="hz">不</span> bù đứng trước thanh 4 đọc thành bú: <span class="hz">不是</span> bú shì.</li>
@@ -229,7 +229,7 @@ function pinyinView(root,tab){
       <div class="row l" style="margin-top:12px"><button class="btn sm" data-gospm="tone" type="button">Luyện nói 4 thanh</button><button class="btn sm" data-gospm="sandhi" type="button">Luyện nói biến điệu (thanh 3, 不, 一)</button></div>`;
   } else if(tab==='ini'||tab==='fin'){
     const groups=tab==='ini'?P.initials:P.finals;
-    M.innerHTML=groups.map(g=>`<div class="pygroup"><h3>${g.g}</h3><div class="pygrid">${g.items.map(([l,h,p,tip])=>`<button class="pycell" data-h="${h}"><b>${l}</b><span class="ex"><span class="hz">${h}</span> ${p}</span><small>${tip}</small></button>`).join('')}</div></div>`).join('')
+    M.innerHTML=groups.map(g=>`<div class="pygroup"><h3>${g.g}</h3><div class="pygrid">${g.items.map(([l,h,p,tip])=>`<button class="pycell" data-h="${h}" data-p="${p}"><b>${l}</b><span class="ex"><span class="hz">${h}</span> ${p}</span><small>${tip}</small></button>`).join('')}</div></div>`).join('')
       +(tab==='fin'?`<div class="gp"><p><b>Lưu ý cách viết:</b> i, u, ü đứng đầu âm tiết viết thành yi, wu, yu. Sau j, q, x thì ü viết thành u (ju, qu, xu) nhưng vẫn đọc là ü. Khi gõ phím, ü thay bằng v.</p></div>`:'');
   } else {
     A.menu(M,[
@@ -240,21 +240,22 @@ function pinyinView(root,tab){
     M.insertAdjacentHTML('beforeend',`<div class="row l" style="margin-top:14px"><button class="btn sm" data-gospm="pair" type="button">Luyện nói cặp âm dễ nhầm</button><button class="btn sm" data-gospm="tone" type="button">Luyện nói 4 thanh</button></div>`);
   }
   $$('[data-gospm]',M).forEach(b=>b.onclick=()=>{S.spMode=b.dataset.gospm;save();location.hash='noi'});
-  $$('[data-h]',M).forEach(b=>b.onclick=()=>speak(b.dataset.h,false,b));
+  /* phần Pinyin phát ghi âm người thật (js/pinyin-audio.js); không có file thì tự quay về giọng trình duyệt */
+  $$('[data-h]',M).forEach(b=>b.onclick=()=>b.dataset.p?A.playSyllable(b.dataset.p,b,{h:b.dataset.h}):speak(b.dataset.h,false,b));
   const back=()=>pinyinView(root,'prac');
   if(tab==='prac'&&A.takeAutorun){const ar=A.takeAutorun('pinyin');if(ar){const f={ptone:pTone,ppair:pPair,pword:pWord}[ar];if(f)return f()}}
   function pTone(){
     const rounds=Array.from({length:10},()=>{const set=P.sets[rand(P.sets.length)], k=rand(4), [h,p]=set[k];
       return {prompt:`<div class="q">Âm này mang thanh mấy?</div>${A.listenBtns()}`, cols:'tonebtns',
         options:set.map(([hh,pp],j)=>({ok:j===k,tone:j+1,html:`<b class="t${j+1}">${pp}</b><small>Thanh ${j+1}</small>`})),
-        onShow:()=>A.bindListen(h), reveal:`<span class="hz" style="font-weight:700">${h}</span> ${p}`}});
+        onShow:()=>A.bindListenPy(h,p), reveal:`<span class="hz" style="font-weight:700">${h}</span> ${p}`}});
     A.runMC({key:'ptone',title:'Nghe đoán thanh điệu',rounds,replay:pTone,back});
   }
   function pPair(){
     const rounds=sample(P.contrasts,10).map(pair=>{const k=rand(2),[h,p]=pair[k];
       return {pair:pair.map(x=>x[1]).join(' / '),prompt:`<div class="q">Bạn nghe thấy âm nào?</div>${A.listenBtns()}`,
         options:pair.map(([hh,pp],j)=>({ok:j===k,html:`<b class="py" style="font-size:24px">${pp}</b>`})),
-        onShow:()=>A.bindListen(h), reveal:`<span class="hz" style="font-weight:700">${h}</span> ${p} · cặp: ${pair.map(x=>x[1]).join(' / ')}`}});
+        onShow:()=>A.bindListenPy(h,p), reveal:`<span class="hz" style="font-weight:700">${h}</span> ${p} · cặp: ${pair.map(x=>x[1]).join(' / ')}`}});
     A.runMC({key:'ppair',title:'Phân biệt âm dễ nhầm',rounds,replay:pPair,back});
   }
   function pWord(){
@@ -265,7 +266,7 @@ function pinyinView(root,tab){
       const others=shuffle(uniq.filter(x=>x.p!==w.p)).slice(0,2).map(x=>x.p);
       const opts=shuffle([...new Set([w.p,...tones.filter(p=>p!==w.p).slice(0,1),...others])].slice(0,4));
       return {word:w,prompt:`<div class="q">Nghe và chọn pinyin đúng</div>${A.listenBtns()}`,
-        options:opts.map(p=>({ok:p===w.p,p,html:pyHTML(p)})), onShow:()=>A.bindListen(w.h),
+        options:opts.map(p=>({ok:p===w.p,p,html:pyHTML(p)})), onShow:()=>A.bindListenPy(w.h,w.p),
         reveal:`<span class="hz" style="font-weight:700">${w.h}</span> ${w.p} · ${esc(w.m)}`};
     });
     A.runMC({key:'pword',title:'Nghe chọn pinyin',rounds,replay:pWord,back});

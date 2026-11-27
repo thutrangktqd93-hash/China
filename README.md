@@ -24,6 +24,7 @@ Web tự học tiếng Trung cho người mới bắt đầu, theo danh sách t�
 ## Ghi chú
 
 - Giọng đọc dùng giọng tiếng Trung có sẵn trên thiết bị; luyện nói cần Chrome/Edge (máy tính, Android) hoặc Safari (iPhone) và quyền dùng micro.
+- **Ghi âm pinyin (phần Pinyin và 3 bài luyện nghe thanh điệu):** 271 âm tiết ghi âm người thật trong `audio/pinyin/` (tên file là pinyin có số thanh, ü viết là v: `ma3.mp3`, `nv3.mp3`). Nguồn: [audio-cmn](https://github.com/hugolpz/audio-cmn) (`64k/syllabs/`), giọng đọc **Chen Wang**, dự án do Hugo Lopez (PLIDAM, INALCO) quản lý, giấy phép **CC-BY-SA**. File chỉ đổi tên, không chỉnh sửa nội dung, và vẫn theo giấy phép CC-BY-SA. Âm tiết không có file (thanh nhẹ ma, de, le) dùng giọng trình duyệt.
 - Danh sách từ: HSK 3.0 – GF0025-2021, cấp 1. Ngày 25/11/2026 đã đối chiếu với bộ dữ liệu cộng đồng [complete-hsk-vocabulary](https://github.com/drkameleon/complete-hsk-vocabulary) (`wordlists/exclusive/new/1.json`, commit 7ac65bf, bản số hóa của bên thứ ba): 506/506 thẻ có trong danh sách, 0 trùng, 0 mục bổ sung. 25 từ ghi pinyin theo cách đọc thực tế (biến điệu 一/不, khinh thanh) khác cách ghi thanh gốc của bộ tham chiếu. Chi tiết trong `js/curriculum.js`.
 - Nghĩa tiếng Việt, câu mẫu, hội thoại và bài kiểm tra tổng hợp được biên soạn để tự học, không phải tài liệu chính thức.
 - Tiến độ học lưu trong trình duyệt của từng người.
@@ -36,6 +37,8 @@ css/style.css
 js/data-hsk1.js    506 từ + câu mẫu theo bài
 js/data-extra.js   pinyin, 214 bộ thủ, lượng từ, ngữ pháp, hội thoại
 js/core.js         trạng thái, giọng nói, router, trang chủ
+js/pinyin-audio.js phát ghi âm pinyin (playSyllable), dự phòng bằng giọng trình duyệt
+audio/pinyin/      271 file ghi âm âm tiết (audio-cmn, CC-BY-SA)
 js/curriculum.js   phiên bản chương trình, nguồn đối chiếu, metadata từ vựng
 js/srs.js          ôn tập cách quãng: lịch ôn, hàng đợi, chuyển dữ liệu cũ
 js/dashboard.js    trang chủ bảng điều khiển, lộ trình, ghi nhận lỗi và điểm yếu
