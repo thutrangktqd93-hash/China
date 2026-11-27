@@ -9,7 +9,7 @@ Web tự học tiếng Trung cho người mới bắt đầu, theo danh sách t�
 | Mục | Nội dung |
 |---|---|
 | Trang chủ | Bảng điều khiển học tập: chọn điểm bắt đầu (chưa biết gì / đã biết pinyin), nút “Bắt đầu bài học tiếp theo”, việc cần làm hôm nay, tổng quan tiến độ, lộ trình 7 chặng nối các mô-đun sẵn có, điểm cần cải thiện (từ hay quên, thanh điệu, cặp âm, câu nghe sai, bài sai nhiều) |
-| Học từ vựng | 506 từ chia 22 bài theo chủ đề, thẻ từ có pinyin tô màu thanh điệu, câu mẫu, flashcard ôn tập cách quãng (SRS: 4 mức Quên/Khó/Tốt/Rất dễ, hàng đợi từ quá hạn → đến hạn → từ mới, mặc định 10 từ mới/ngày), 3 game (Ghép cặp, Thử thách tốc độ, Bắt thanh điệu) và 3 bài luyện nghe |
+| Học từ vựng | 506 từ chia 22 bài (hư từ cơ bản ở bài 1–3), 456 câu mẫu chỉ dùng từ đã học, từ nào cũng có câu ví dụ; thẻ từ có pinyin tô màu thanh điệu, flashcard ôn tập cách quãng (SRS: 4 mức Quên/Khó/Tốt/Rất dễ, hàng đợi từ quá hạn → đến hạn → từ mới, mặc định 10 từ mới/ngày), 3 game (Ghép cặp, Thử thách tốc độ, Bắt thanh điệu) và 3 bài luyện nghe |
 | Mưa từ vựng | Nghĩa tiếng Việt hoặc âm thanh rơi xuống, gõ pinyin để bắn hạ; gõ số thanh điệu để nhân đôi điểm, có trùm cuối mỗi cấp và bám đuổi từ yếu |
 | Luyện viết | Xem thứ tự nét và tự viết trên ô Mễ tự cách, báo nét sai (dùng thư viện Hanzi Writer) |
 | Pinyin | Thanh điệu, 23 thanh mẫu, 36 vận mẫu có âm thanh; luyện nghe thanh điệu và cặp âm dễ nhầm |
@@ -34,7 +34,8 @@ Web tự học tiếng Trung cho người mới bắt đầu, theo danh sách t�
 ```
 index.html
 css/style.css
-js/data-hsk1.js    506 từ + câu mẫu theo bài
+js/data-hsk1.js    506 từ + 456 câu mẫu theo bài
+tools/kiem-tra-cau-mau.py  kiểm tra câu mẫu: chỉ dùng từ đã học, mọi từ có câu ví dụ (python3 tools/kiem-tra-cau-mau.py)
 js/data-extra.js   pinyin, 214 bộ thủ, lượng từ, ngữ pháp, hội thoại
 js/core.js         trạng thái, giọng nói, router, trang chủ
 js/pinyin-audio.js phát ghi âm pinyin (playSyllable), dự phòng bằng giọng trình duyệt

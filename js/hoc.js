@@ -79,7 +79,9 @@ function renderVocab(){
 const RLABEL={again:['Quên','Again'],hard:['Khó','Hard'],good:['Tốt','Good'],easy:['Rất dễ','Easy']};
 function exampleFor(w){
   const inUnit=UNITS[w.U-1]?UNITS[w.U-1].sents:[];
-  return inUnit.find(s=>s.tokens.includes(w.h))||ALLSENTS.find(s=>s.tokens.includes(w.h))||null;
+  /* ưu tiên câu có đúng từ này; chữ đơn chỉ nằm trong từ ghép (们, 爸, 前…) thì lấy câu có từ ghép đó */
+  const hit=s=>s.tokens.includes(w.h), part=s=>[...w.h].length===1&&s.tokens.some(t=>t.includes(w.h));
+  return inUnit.find(hit)||ALLSENTS.find(hit)||inUnit.find(part)||ALLSENTS.find(part)||null;
 }
 function flashHead(scope){
   const R=A.srs, c=R.counts(scope==='all'?A.ALLWORDS:scope==='weak'?R.weakWords():A.unitWords());

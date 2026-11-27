@@ -8,8 +8,8 @@
 (function(){
 const A=window.App, G=window.GRAMMAR||[], UNITS=A.UNITS, LAST=UNITS.length;
 /* bài một từ được dạy = bài sớm nhất có từ đó trong danh sách từ vựng HOẶC trong câu mẫu.
-   Lý do: danh sách 22 bài xếp theo chủ đề, các hư từ 是 吗 的 在 有 了 nằm ở bài 21–22, nhưng người học đã gặp chúng
-   trong câu mẫu từ bài 1–3 (có pinyin và nghĩa). Ngữ pháp cần được giải thích ở chỗ người học gặp lần đầu.
+   Lý do: ngữ pháp cần được giải thích ở chỗ người học gặp từ lần đầu. Hiện các hư từ 是 吗 的 有 了 在 đã nằm ở bài 1–3
+   và ví dụ ngữ pháp chỉ dùng từ của bài 1–3, nên các điểm ngữ pháp cơ bản rơi vào bài 1–3.
    STRICT=true: chỉ tính danh sách từ vựng. */
 const STRICT=false;
 const WU=new Map(), VU=new Map();

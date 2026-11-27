@@ -14,7 +14,7 @@ function examHome(root){
   ${A.voicePicker()}
   <div class="exmodes">
     <div class="tcard exmode"><span class="pill">Mô phỏng dạng HSK</span><b>Đề mô phỏng dạng HSK 1 (mới)</b>
-      <p>40 câu, ${HSK_MIN} phút, theo 8 dạng câu của đề HSK 1 mới do 汉考国际 công bố (áp dụng từ 07/2026).</p>
+      <p>40 câu, ${HSK_MIN} phút, theo 8 dạng câu của đề HSK 1 mới do 汉考国际 công bố. Kỳ thi HSK 1–6 theo dạng mới dự kiến bắt đầu từ cuối năm 2026; xem lịch và dạng đề chính thức tại <a href="https://www.chinesetest.cn" target="_blank" rel="noopener">chinesetest.cn</a> trước khi đăng ký thi.</p>
       <p><b>Nghe (20 câu):</b> chọn 1 trong 3 hình · nghe câu hỏi, chọn câu trả lời · nghe hội thoại, chọn hình · nghe một đoạn và câu hỏi, chọn đáp án. Mỗi câu nghe tối đa 2 lần.</p>
       <p><b>Đọc (20 câu):</b> nối câu với hình · nối câu hỏi với câu trả lời · chọn từ điền vào chỗ trống · đọc câu và trả lời câu hỏi ★.</p>
       <p><b>Chấm điểm:</b> mỗi câu 5 điểm, Nghe 100 + Đọc 100 = 200, đạt từ 120. Đề mới chưa công bố thang điểm nên tạm dùng thang của đề HSK 1 cũ.</p>
@@ -46,8 +46,13 @@ function buildExam(){
   blanks.forEach(s=>{
     const cand=s.tokens.map((t,i)=>[t,i]).filter(([t])=>lookup.has(t)&&!['的','了','吗','呢','吧'].includes(t));
     const [t,idx]=cand.length?cand[rand(cand.length)]:[s.tokens[0],0]; const w=lookup.get(t)||{h:t,m:''};
-    const same=shuffle(words.filter(x=>x.h!==t&&[...x.h].length===[...t].length)).slice(0,3);
-    const shown=s.tokens.map((x,i)=>i===idx?'＿＿':x).join('');
+    /* đáp án nhiễu: cùng số chữ, khác bài, không chung chữ Hán, không trùng nghĩa, không phải từ khác đã có trong câu */
+    const senses=x=>String(x.m||'').toLowerCase().replace(/\(.*?\)/g,'').split(/[,;]/).map(z=>z.trim()).filter(Boolean);
+    const wsn=new Set(senses(w)), tc=new Set([...t]);
+    const okD=x=>x.h!==t&&[...x.h].length===[...t].length&&!s.tokens.includes(x.h)&&![...x.h].some(c=>tc.has(c))&&!senses(x).some(z=>wsn.has(z));
+    let pool=words.filter(x=>okD(x)&&x.U!==w.U); if(pool.length<3)pool=words.filter(okD);
+    const same=shuffle(pool).slice(0,3);
+    let k=-1; const shown=(s.raw||s.tokens.join(' ')).split(/\s+/).map(part=>{const m=part.match(/^(.*?)([，。？！、：]*)$/);if(!m[1])return part;k++;return (k===idx?'＿＿':m[1])+m[2]}).join('');
     Q.push({part:'r',type:'Chọn từ điền vào chỗ trống',q:`<span class="hz">${shown}</span><br><span class="meta">${esc(s.m)}</span>`,
       opts:shuffle([w,...same]).map(x=>({html:`<span class="hz">${x.h}</span>`,ok:x.h===t})),exp:`${s.h} · ${s.p}`});
   });
@@ -102,7 +107,7 @@ function examRun(root){
 
 /* =================================================================
    ĐỀ MÔ PHỎNG DẠNG HSK 1 MỚI
-   Theo "新版HSK（1-6级）考试结构与样题示例" (汉考国际, công bố 12/2025, áp dụng 07/2026), phần cấp 1:
+   Theo "新版HSK（1-6级）考试结构与样题示例" (汉考国际, công bố 12/2025; lịch áp dụng cho kỳ thi HSK 1–6 cần kiểm tra lại trên chinesetest.cn), phần cấp 1:
    Nghe 20 câu (~12 phút): P1 nghe cụm từ chọn 1/3 hình · P2 nghe câu hỏi chọn câu trả lời (3 lựa chọn chữ)
      · P3 nghe hội thoại nối với hình A–F · P4 nghe đoạn nói + câu hỏi, chọn 1/3.
    Đọc 20 câu (20 phút): P1 câu nối với hình A–F · P2 nối câu hỏi với câu trả lời A–F
@@ -147,11 +152,13 @@ function qfam(h){if(/什么时候|几点|哪天|星期几|几月|几号/.test(h)
 const ln=(who,x)=>{const [s,p,m]=x.split('|');return {who,raw:s,h:s.replace(/\s+/g,''),tokens:tok(s),p:p.trim(),m:m.trim()}};
 const DLGS=[...(window.DIALOGS||[]).map(d=>d.lines.map(([who,s,p,m])=>({who,raw:s,h:s.replace(/\s+/g,''),tokens:tok(s),p,m}))),
   ...(window.EXAM_DLG||[]).map(([a,b])=>[ln('A',a),ln('B',b)])];
+/* chỉ dùng câu hội thoại có toàn từ trong danh sách cấp 1 (phần Hội thoại có vài từ ngoài danh sách như 但是, 有意思) */
+const okL=l=>!!l&&l.tokens.every(t=>WMAP.has(t)||/^[零一二三四五六七八九十百两]+$/.test(t));
 /* cặp hỏi – đáp lấy từ các bài hội thoại: câu hỏi cuối lượt của người này, vế đầu lượt của người kia */
 const QA=(()=>{const out=[],seen=new Set();
   DLGS.forEach(L=>L.forEach((l,i)=>{const n=L[i+1];if(!n||n.who===l.who)return;
     const qs=segs(l.raw,l.p),q=qs[qs.length-1];if(!q||!/？$/.test(q.h)||q.h.length<4||/^(你|您)呢？$/.test(q.h))return;
-    const a=segs(n.raw,n.p)[0];if(!a||/？$/.test(a.h)||seen.has(q.h))return;seen.add(q.h);
+    const a=segs(n.raw,n.p)[0];if(!a||/？$/.test(a.h)||seen.has(q.h)||!okL(q)||!okL(a))return;seen.add(q.h);
     out.push({q,a,fam:qfam(q.h),m:l.m+' → '+n.m})}));
   (window.EXAM_QA||[]).forEach(([x,y])=>{const q=ln('A',x),a=ln('B',y);if(seen.has(q.h))return;seen.add(q.h);out.push({q,a,fam:qfam(q.h),m:q.m+' → '+a.m})});
   return out})();
@@ -163,9 +170,9 @@ const clash=(x,y)=>x.fam===y.fam||x.a.h===y.a.h||(x.fam==='who'&&personAns(y.a))
   ||([x.fam,y.fam].includes('state')&&[x.fam,y.fam].includes('time'))||([x.fam,y.fam].includes('choice')&&[x.fam,y.fam].includes('what'));
 const pictIn=t=>[...new Set(t.filter(x=>PSET.has(x)))];
 /* hội thoại 2 lượt và câu đơn có đúng một từ có hình */
-const DPAIRS=DLGS.flatMap(L=>L.slice(0,-1).map((l,i)=>[l,L[i+1]]).filter(([a,b])=>a.who!==b.who))
+const DPAIRS=DLGS.flatMap(L=>L.slice(0,-1).map((l,i)=>[l,L[i+1]]).filter(([a,b])=>a.who!==b.who&&okL(a)&&okL(b)))
   .map(([a,b])=>({a,b,h:a.h+b.h,key:pictIn([...a.tokens,...b.tokens])})).filter(x=>x.key.length===1).map(x=>({...x,key:x.key[0]}));
-const SENTS=[...ALLSENTS.map(s=>({h:s.h,tokens:s.tokens,p:s.p,m:s.m})),...DLGS.flat().map(l=>({h:l.h,tokens:l.tokens,p:l.p,m:l.m})),
+const SENTS=[...ALLSENTS.map(s=>({h:s.h,tokens:s.tokens,p:s.p,m:s.m})),...DLGS.flat().filter(okL).map(l=>({h:l.h,tokens:l.tokens,p:l.p,m:l.m})),
   ...(window.EXAM_SENT||[]).map(x=>{const l=ln('',x);return {h:l.h,tokens:l.tokens,p:l.p,m:l.m}})]
   .filter((s,i,a)=>a.findIndex(x=>x.h===s.h)===i);
 const SPIC=SENTS.map(s=>({...s,key:pictIn(s.tokens)})).filter(s=>s.key.length===1).map(s=>({...s,key:s.key[0]}));

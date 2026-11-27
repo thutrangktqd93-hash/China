@@ -156,6 +156,8 @@ function ctaBlock(){
     ${s.noskip?'':`<button class="linkbtn" id="dskip" type="button">Bỏ qua bước này, tôi đã biết</button>`}</div>`;
 }
 function todayBlock(){
+  if(!S.track)return '';                       // chưa chọn điểm xuất phát: để người học chọn trước
+  if(S.track==='zero'&&!pinyinDone())return pinyinTodayBlock();
   const t=today();
   const card=(id,n,label,sub,btn)=>`<div class="tdcard" ${id?`data-go="${id}"`:''}><b>${n}</b><span>${label}</span><small>${sub}</small>${btn?`<em>${btn} →</em>`:''}</div>`;
   return `<section class="dsec"><h2 class="eyebrow">Việc cần làm hôm nay</h2><div class="tdgrid">
@@ -164,6 +166,17 @@ function todayBlock(){
     ${card('listen',t.listen,'câu cần luyện nghe',t.ws?`${t.ws} câu nghe sai gần đây`:t.listenUnit?`câu mẫu bài ${t.cur} chưa luyện`:'đã luyện câu mẫu bài này',t.listen?'Luyện nghe':'')}
     <div class="tdcard act" data-go="act"><b class="hz">练</b><span>${esc(t.act.t)}</span><small>${esc(t.act.d)}</small><em>Luyện →</em></div>
   </div>${sessionPlan(t)}</section>`;
+}
+/* người mới, chưa xong phần phát âm: chỉ gợi ý các bước pinyin, chưa đẩy từ mới hay luyện nghe câu */
+function pinyinTodayBlock(){
+  const left=pinyinSteps().map((x,i)=>({...x,i})).filter(x=>!x.done).slice(0,3);
+  return `<section class="dsec"><h2 class="eyebrow">Việc cần làm hôm nay</h2><div class="tdgrid">
+    ${left.map((x,j)=>`<div class="tdcard" data-py="${x.i}"><b>${j+1}</b><span>${esc(x.t)}</span><small>${esc(x.detail||'')}</small><em>${j?'Luyện':'Bắt đầu'} →</em></div>`).join('')}
+  </div><p class="meta">Học xong phần phát âm, web sẽ gợi ý từ mới và bài nghe của Bài 1. Đã biết pinyin? Bấm “Đổi lựa chọn” trong Lộ trình học.</p></section>`;
+}
+/* đã có dữ liệu học chưa (để không hiện một loạt ô số 0 cho người mới) */
+function hasData(){
+  return Object.keys(S.review||{}).length>0||Object.keys(S.stats||{}).length>0||(S.exams||[]).length>0||Object.keys(S.speak||{}).length>0||Object.keys(S.wrote||{}).length>0;
 }
 function sessionPlan(t){
   const len=S.sessionMin||15, k=len/15;
@@ -179,6 +192,7 @@ function sessionPlan(t){
     <p class="meta">Chỉ là gợi ý, bạn có thể học theo thứ tự khác.</p></details>`;
 }
 function overviewBlock(){
+  if(!hasData())return '';
   const o=overview();
   return `<section class="dsec"><h2 class="eyebrow">Tổng quan tiến độ</h2><div class="kpis dk">
     <div class="kpi"><small>Chuỗi ngày học</small><b>${o.streak}<em> ngày</em></b><span>Tổng thời gian ${fmtMin(o.minutes)}</span></div>
@@ -188,6 +202,7 @@ function overviewBlock(){
   </div></section>`;
 }
 function pathBlock(){
+  if(!S.track)return '';
   const o=overview(), py=pinyinSteps(), pyN=py.filter(s=>s.done).length;
   const d=S.done||{}, cnt=p=>UNITS.filter(u=>d[`${p}-${u.n}`]>0).length;
   const gram=Object.keys(d).filter(k=>/^(gq|mq|oq|gram)-/.test(k)).length;
@@ -211,7 +226,7 @@ function pathBlock(){
 function weakBlock(){
   const ww=R().weakWords(5), tc=toneConfusions().slice(0,3), pw=pairWeak().slice(0,3), ws=weakSentences().slice(0,3), uw=unitWeak().slice(0,3);
   const empty='<p class="meta">Chưa đủ dữ liệu. Làm thêm bài luyện để web biết bạn yếu ở đâu.</p>';
-  if(!ww.length&&!tc.length&&!pw.length&&!ws.length&&!uw.length)return `<section class="dsec"><h2 class="eyebrow">Điểm cần cải thiện</h2><p class="note">Chưa đủ dữ liệu. Khi bạn ôn flashcard, nghe đoán thanh, phân biệt cặp âm và làm bài nghe, web sẽ chỉ ra từ hay quên, thanh điệu hay nhầm, cặp âm, câu nghe sai và bài sai nhiều để bạn luyện lại.</p></section>`;
+  if(!ww.length&&!tc.length&&!pw.length&&!ws.length&&!uw.length)return hasData()?`<section class="dsec"><h2 class="eyebrow">Điểm cần cải thiện</h2><p class="note">Chưa đủ dữ liệu. Khi bạn ôn flashcard, nghe đoán thanh, phân biệt cặp âm và làm bài nghe, web sẽ chỉ ra từ hay quên, thanh điệu hay nhầm, cặp âm, câu nghe sai và bài sai nhiều để bạn luyện lại.</p></section>`:'';
   /* chỉ hiện những mục đã có dữ liệu */
   const box=(title,body,btn,id)=>body===empty?'':`<div class="wcardx"><h3>${title}</h3>${body}${btn?`<button class="btn sm" data-weak="${id}" type="button">${btn}</button>`:''}</div>`;
   return `<section class="dsec"><h2 class="eyebrow">Điểm cần cải thiện</h2><div class="wgridx">
@@ -236,6 +251,7 @@ function bind(root){
     listen:{route:'hoc',prep:()=>{if(!t.ws)S.unit=t.cur;S.tab='listen';S.prev=false},auto:['listen','lsent']},
     act:t.act,
   };
+  $$('[data-py]',root).forEach(c=>{const st=pinyinSteps()[+c.dataset.py];c.tabIndex=0;c.setAttribute('role','button');const f=()=>{if(st)go(st)};c.onclick=f;c.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();f()}}});
   $$('[data-go]',root).forEach(c=>{c.tabIndex=0;c.setAttribute('role','button');const f=()=>go(goMap[c.dataset.go]);c.onclick=f;c.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();f()}}});
   $$('#dlen button',root).forEach(b=>b.onclick=()=>{S.sessionMin=+b.dataset.m;save();A.route()});
   const pathMap={pinyin:{route:'pinyin'},flash:{route:'hoc',prep:()=>{S.tab='flash'}},order:{route:'hoc',prep:()=>{S.tab='listen'},auto:['listen','lorder']},

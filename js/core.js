@@ -386,8 +386,8 @@ const MODS=[
   ['mua','雨','Mưa từ vựng','Nghĩa tiếng Việt hoặc âm thanh rơi xuống, gõ pinyin để bắn hạ. Có đấu trùm.','Mới'],
   ['viet','写','Luyện viết chữ Hán','Xem thứ tự nét và tự viết trên ô Mễ tự cách, báo nét sai.'],
   ['pinyin','拼','Lộ trình Pinyin','Thanh điệu, thanh mẫu, vận mẫu có âm thanh và bài luyện nghe.'],
-  ['noi','说','Luyện nói','Đọc to câu mẫu, máy nhận dạng giọng và chấm điểm từng chữ.'],
-  ['shadow','跟','Shadowing','Nghe từng câu rồi nói đuổi theo ngay, có ngắt chờ, lặp câu, nghe chay và chấm điểm.','Mới'],
+  ['noi','说','Luyện nói','Đọc to câu mẫu, xem chữ nào máy nhận diện được; ghi âm giọng mình để so với mẫu.'],
+  ['shadow','跟','Shadowing','Nghe từng câu rồi nói đuổi theo ngay, có ngắt chờ, lặp câu, nghe chay và đối chiếu chữ nhận diện được.','Mới'],
   ['hoithoai','话','Hội thoại','10 hội thoại theo tình huống, nghe từng câu và đóng vai.'],
   ['nguphap','语','Lượng từ & ngữ pháp','16 điểm ngữ pháp HSK 1, 20 lượng từ thông dụng, kèm bài tập.'],
   ['bothu','部','214 bộ thủ','Tra bộ thủ theo số nét, xem ví dụ trong từ HSK và chơi đoán nghĩa.'],
@@ -448,7 +448,7 @@ register('home',root=>{
     <div class="lanterns">${ART.LANTERNS||''}</div>
     <div class="coins">${ART.COINS||''}</div>
     <div class="hero-txt">
-      ${helloBlock()}
+      ${S.name?helloBlock():''}
       <h1 class="display">Hán Ngữ<br>3.0</h1>
       <p class="sub">Nói được tiếng Trung với <span class="pill"><i></i>${ALLWORDS.length} từ</span></p>
       ${D?D.ctaBlock():`      <div class="cta"><a class="btn primary bigbtn" href="#hoc">${known?`Học tiếp bài ${u.n}`:'Bắt đầu học'}</a>
@@ -459,6 +459,7 @@ register('home',root=>{
         <div><small>Đã nhớ</small><span class="now">${known} từ</span></div>
       </div>
 `}
+      ${S.name?'':helloBlock()}
     </div>
     <div class="hero-art">${ART.PANDA||''}</div>
   </section>
