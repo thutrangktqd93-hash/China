@@ -23,11 +23,13 @@ Web tự học tiếng Trung cho người mới bắt đầu, theo danh sách t�
 
 ## Ghi chú
 
-- Giọng đọc dùng giọng tiếng Trung có sẵn trên thiết bị; luyện nói cần Chrome/Edge (máy tính, Android) hoặc Safari (iPhone) và quyền dùng micro.
+- Âm thanh: phần Pinyin và 3 bài luyện nghe thanh điệu dùng ghi âm người thật (xem dưới). Các phần khác dùng giọng đọc có sẵn của thiết bị (Web Speech API), nên giọng và tốc độ có thể khác nhau giữa máy, hệ điều hành và trình duyệt; Safari trên iPhone/iPad không phải lúc nào cũng cho web dùng các giọng tải thêm trong Cài đặt. Web không bảo đảm có một giọng cụ thể. Luyện nói cần Chrome/Edge (máy tính, Android) hoặc Safari (iPhone) và quyền dùng micro.
 - **Ghi âm pinyin (phần Pinyin và 3 bài luyện nghe thanh điệu):** 271 âm tiết ghi âm người thật trong `audio/pinyin/` (tên file là pinyin có số thanh, ü viết là v: `ma3.mp3`, `nv3.mp3`). Nguồn: [audio-cmn](https://github.com/hugolpz/audio-cmn) (`64k/syllabs/`), giọng đọc **Chen Wang**, dự án do Hugo Lopez (PLIDAM, INALCO) quản lý, giấy phép **CC-BY-SA**. File chỉ đổi tên, không chỉnh sửa nội dung, và vẫn theo giấy phép CC-BY-SA. Âm tiết không có file (thanh nhẹ ma, de, le) dùng giọng trình duyệt.
 - Danh sách từ: HSK 3.0 – GF0025-2021, cấp 1. Ngày 25/11/2026 đã đối chiếu với bộ dữ liệu cộng đồng [complete-hsk-vocabulary](https://github.com/drkameleon/complete-hsk-vocabulary) (`wordlists/exclusive/new/1.json`, commit 7ac65bf, bản số hóa của bên thứ ba): 506/506 thẻ có trong danh sách, 0 trùng, 0 mục bổ sung. 25 từ ghi pinyin theo cách đọc thực tế (biến điệu 一/不, khinh thanh) khác cách ghi thanh gốc của bộ tham chiếu. Chi tiết trong `js/curriculum.js`.
 - Nghĩa tiếng Việt, câu mẫu, hội thoại và bài kiểm tra tổng hợp được biên soạn để tự học, không phải tài liệu chính thức.
-- Tiến độ học lưu trong trình duyệt của từng người.
+- Tiến độ học lưu trong trình duyệt của từng người (localStorage). Đồng bộ giữa các máy là tùy chọn: bấm Đồng bộ và đăng nhập Google, dữ liệu được gộp với bản trên Firebase.
+- Mức nhớ từ vựng và số từ "nhớ dài hạn" chỉ tính theo lịch ôn flashcard (SRS); trò chơi và bài kiểm tra chỉ ghi số liệu luyện tập, trả lời sai một từ đã học thì từ đó vào hàng ôn.
+- Phần Pinyin chỉ tính hoàn thành khi làm bài kiểm tra đạt từ 80%, hoặc khi người học chủ động chọn "đã biết, bỏ qua" (hiển thị riêng là "đã bỏ qua").
 
 ## Cấu trúc
 

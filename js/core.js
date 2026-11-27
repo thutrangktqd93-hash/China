@@ -23,11 +23,15 @@ function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){} if(W.
 
 const $=(s,el=document)=>el.querySelector(s);
 const $$=(s,el=document)=>[...el.querySelectorAll(s)];
-const box=w=>S.box[w.h]||0;
+/* Mức nhớ 0–5 của một từ, CHỈ tính từ lịch ôn SRS (S.review, xem js/srs.js · boxFrom):
+   0 chưa học · 1 đang học · 2 đang ôn · 3 khoảng ôn ≥ 7 ngày · 5 nhớ dài hạn.
+   Trò chơi và bài kiểm tra không ghi vào đây; S.box cũ vẫn được giữ trong dữ liệu nhưng không dùng để hiển thị. */
+const box=w=>{const c=S.review&&S.review[w.h];if(!c||c.state==='new')return 0;if(c.state==='learning')return 1;if(c.state==='mastered')return 5;return c.interval>=7?3:2};
 const unit=()=>UNITS[S.unit-1];
 function dayStr(d){return d.toLocaleDateString('en-CA')}
 /* ---------- nhật ký học: theo ngày (XP, phút, từ mới) và từng hoạt động ---------- */
-const knownCount=()=>ALLWORDS.filter(w=>(S.box[w.h]||0)>=3).length;
+/* số từ "đã thuộc" dùng chung cho thanh trên cùng, trang chủ và Lịch sử: số từ nhớ dài hạn theo SRS (khoảng ôn ≥ 21 ngày) */
+const knownCount=()=>W.App&&W.App.srs?W.App.srs.counts().mastered:0;
 function dayRec(){
   const d=dayStr(new Date());
   if(!S.days||typeof S.days!=='object')S.days={};
@@ -55,7 +59,7 @@ let lastInput=Date.now();
 setInterval(()=>{if(document.visibilityState==='visible'&&Date.now()-lastInput<120000){const r=touchDay();r.min++;save()}},60000);
 function renderStats(){
   $('#sXp').textContent=S.xp; $('#sStreak').textContent=S.streak;
-  $('#sKnown').textContent=ALLWORDS.filter(w=>box(w)>=3).length;
+  $('#sKnown').textContent=knownCount();
   const kt=$('#sKnownTotal'); if(kt)kt.textContent='/ '+ALLWORDS.length;
 }
 let toastT;
@@ -119,16 +123,25 @@ function voiceTag(v){
   const tw=/^(zh-tw|cmn-hant)/i.test((v.lang||'').replace('_','-'))?' · giọng Đài Loan':'';
   return (s>=85?'rất tự nhiên':s>=75?'tự nhiên':s>=50?'bình thường':'máy móc')+tw;
 }
+/* Danh sách giọng có thể rỗng lúc đầu hoặc tải chậm (Chrome, Safari), nên đọc lại khi có sự kiện voiceschanged
+   và thử lại vài lần. Sau ~3 giây vẫn rỗng thì coi như máy không có giọng tiếng Trung: speak() vẫn chạy với lang 'zh-CN'
+   (trình duyệt tự chọn giọng mặc định nếu có), không báo lỗi. Giọng zh-TW được dùng khi không có giọng zh-CN. */
 function loadVoices(){
   if(!('speechSynthesis' in W))return;
-  const v=speechSynthesis.getVoices(); if(!v.length)return;
+  let v=[]; try{v=speechSynthesis.getVoices()||[]}catch(e){}
+  if(!v.length)return;
   voicesChecked=true;
-  zhVoices=v.filter(x=>/^(zh|cmn)/i.test(x.lang)&&voiceScore(x)>-100).sort((a,b)=>voiceScore(b)-voiceScore(a));
+  zhVoices=v.filter(x=>/^(zh|cmn)/i.test(x.lang||'')&&voiceScore(x)>-100).sort((a,b)=>voiceScore(b)-voiceScore(a));
   const picked=S.voice&&zhVoices.find(x=>x.voiceURI===S.voice);
   zhVoice=picked||zhVoices[0]||null;
   refreshPicker();
 }
-if('speechSynthesis' in W){loadVoices();speechSynthesis.onvoiceschanged=loadVoices;setTimeout(loadVoices,800)}
+if('speechSynthesis' in W){
+  loadVoices();
+  try{speechSynthesis.addEventListener('voiceschanged',loadVoices)}catch(e){speechSynthesis.onvoiceschanged=loadVoices}
+  [400,1200,3000].forEach(t=>setTimeout(loadVoices,t));
+  setTimeout(()=>{if(!voicesChecked){voicesChecked=true;refreshPicker()}},3200);
+}
 function speak(text,slow,btn,onb){
   return new Promise(res=>{
     if(!('speechSynthesis' in W)){toast('Trình duyệt này không hỗ trợ đọc thành tiếng');return res()}
@@ -148,16 +161,18 @@ const UA=navigator.userAgent;
 const IS_IOS=/iPad|iPhone|iPod/.test(UA)||(/Macintosh/.test(UA)&&navigator.maxTouchPoints>1);
 const IS_MAC=/Macintosh/.test(UA)&&!IS_IOS;
 const IS_SAFARI=/Safari/.test(UA)&&!/Chrome|Chromium|CriOS|FxiOS|Edg|OPR|coc_coc|Firefox/i.test(UA);
-const VOICE_TIP=IS_MAC&&IS_SAFARI
-  ? `<b>Safari trên Mac không cho web dùng giọng Lili hay Tingting (Nâng cao)</b>, kể cả khi máy đã tải, nên chỉ có vài giọng mặc định. Muốn giọng hay hơn, hãy mở web bằng <b>Chrome</b> hoặc <b>Cốc Cốc</b> (web tự chọn Lili), rồi bấm <b>Đồng bộ</b> để giữ chung tiến độ.`
-  : IS_IOS
-  ? `Muốn giọng hay hơn trên iPhone/iPad: Cài đặt → Trợ năng → Nội dung được đọc → Giọng nói → Tiếng Trung (Trung Quốc đại lục) → tải <b>Lili (Cao cấp)</b> hoặc <b>Tingting (Nâng cao)</b>, rồi vuốt tắt hẳn trình duyệt và mở lại web.`
-  : IS_MAC
-  ? `Muốn giọng hay hơn: Cài đặt hệ thống → Trợ năng → Nội dung được đọc → Giọng hệ thống → Quản lý giọng → Tiếng Trung (Trung Quốc đại lục) → tải <b>Lili (Cao cấp)</b> hoặc <b>Tingting (Nâng cao)</b>. Sau đó thoát hẳn trình duyệt (⌘ Command + Q) rồi mở lại web.`
-  : `Muốn giọng hay hơn: mở web bằng <b>Microsoft Edge</b> (giọng Xiaoxiao tự nhiên nhất) hoặc <b>Chrome</b> (giọng Google 普通话).`;
+/* Không hứa một giọng cụ thể: danh sách giọng web nhìn thấy phụ thuộc thiết bị, hệ điều hành và trình duyệt.
+   Ví dụ Safari (iPhone, iPad, Mac) không phải lúc nào cũng cho web dùng các giọng đã tải thêm trong Cài đặt. */
+const VOICE_BASE='Giọng đọc ở các phần (trừ phần Pinyin dùng ghi âm người thật) là giọng có sẵn của thiết bị, nên có thể khác nhau giữa các máy và trình duyệt, kể cả về tốc độ.';
+const VOICE_TIP=(IS_IOS
+  ? `${VOICE_BASE} Trên iPhone/iPad, Safari có giới hạn riêng: các giọng tải thêm trong Cài đặt có thể không xuất hiện trên web, nên có khi chỉ có vài giọng mặc định.`
+  : IS_MAC&&IS_SAFARI
+  ? `${VOICE_BASE} Safari trên Mac có thể không hiện hết các giọng đã tải trong Cài đặt hệ thống.`
+  : VOICE_BASE)
+  +' Nếu giọng chưa như ý, bạn có thể thử trình duyệt khác (Chrome, Cốc Cốc, Edge, Safari) hoặc thêm giọng tiếng Trung trong cài đặt của máy, nhưng web không thể bảo đảm sẽ có một giọng cụ thể.';
 function voiceWarn(){
-  if(!('speechSynthesis' in W)) return `<div class="note warn">Trình duyệt này không hỗ trợ đọc thành tiếng. Hãy dùng Chrome, Edge hoặc Safari bản mới.</div>`;
-  if(voicesChecked&&!zhVoice) return `<div class="note warn">Máy bạn chưa có giọng đọc tiếng Trung nên âm thanh có thể sai. ${VOICE_TIP} Trên Windows: Cài đặt → Thời gian và ngôn ngữ → Giọng nói → thêm giọng tiếng Trung.</div>`;
+  if(!('speechSynthesis' in W)) return `<div class="note warn">Trình duyệt này không hỗ trợ đọc thành tiếng. Phần Pinyin vẫn có ghi âm người thật; các phần khác cần trình duyệt có hỗ trợ đọc (Chrome, Cốc Cốc, Edge hoặc Safari bản mới).</div>`;
+  if(voicesChecked&&!zhVoice) return `<div class="note warn">Web không tìm thấy giọng tiếng Trung trên trình duyệt này. Web vẫn gửi lệnh đọc bằng tiếng Trung; máy có thể đọc bằng giọng mặc định, đọc sai hoặc không đọc. Phần Pinyin vẫn có ghi âm người thật. ${VOICE_TIP}</div>`;
   return '';
 }
 /* ô chọn giọng dùng chung */
@@ -168,9 +183,9 @@ function pickerOptions(){
 function pickerNote(){
   if(!('speechSynthesis' in W)) return 'Trình duyệt này không hỗ trợ đọc thành tiếng.';
   if(!voicesChecked) return 'Đang tìm giọng đọc trên máy…';
-  if(!zhVoice) return 'Chưa có giọng tiếng Trung. '+VOICE_TIP;
+  if(!zhVoice) return 'Không tìm thấy giọng tiếng Trung trên trình duyệt này; máy sẽ dùng giọng mặc định nếu có. Phần Pinyin dùng ghi âm người thật. '+VOICE_TIP;
   const s=voiceScore(zhVoice);
-  return `Đang dùng: <b>${esc(zhVoice.name)}</b> · ${voiceTag(zhVoice)}. Máy có ${zhVoices.length} giọng tiếng Trung.`+(s<75?' '+VOICE_TIP:'');
+  return `Đang dùng: <b>${esc(zhVoice.name)}</b> · ${voiceTag(zhVoice)}. Máy có ${zhVoices.length} giọng tiếng Trung. Phần Pinyin dùng ghi âm người thật, không phụ thuộc giọng này.`+(s<75?' '+VOICE_TIP:'');
 }
 function voicePicker(){
   return `<div class="voicepick"><div class="ctrl" style="margin-bottom:6px"><label for="vsel">Giọng đọc</label><select id="vsel">${pickerOptions()}</select>
@@ -287,8 +302,9 @@ function runMC(cfg){
     $$('.opt',MAIN).forEach((b,j)=>{b.disabled=true;if(r.options[j].ok)b.classList.add('ok');else if(j===k)b.classList.add('bad')});
     if(ok){combo++;correct++;let g=10+Math.min(combo-1,5)*2;
       if(cfg.timed)g+=Math.round(Math.max(0,1-(performance.now()-r._t0)/(cfg.timed*1000))*10);
-      score+=g; if(r.word)S.box[r.word.h]=Math.min(5,box(r.word)+ (box(r.word)<2?1:0));}
-    else{combo=0;if(cfg.lives)lives--;$('.prompt').classList.add('shake'); if(r.word){S.box[r.word.h]=Math.max(0,box(r.word)-1); if(W.App.srs)W.App.srs.flag(r.word.h)}}
+      score+=g;}
+    /* trả lời đúng/sai chỉ ghi vào số liệu luyện tập (track); sai một từ đã học thì đưa từ đó vào hàng ôn (srs.flag), không đổi mức nhớ */
+    else{combo=0;if(cfg.lives)lives--;$('.prompt').classList.add('shake'); if(r.word&&W.App.srs)W.App.srs.flag(r.word.h)}
     save();
     $('#pstats').innerHTML=stats();
     const over=cfg.lives&&lives<=0;
@@ -299,9 +315,10 @@ function runMC(cfg){
   }
   function next(){
     i++;
-    if(i>=R.length||(cfg.lives&&lives<=0))
+    if(i>=R.length||(cfg.lives&&lives<=0)){
+      if(cfg.onFinish)try{cfg.onFinish({correct,total:answered,count:R.length})}catch(e){}
       showResult({title:cfg.title,score,correct,total:answered,xp:score/4+3,replay:cfg.replay,back:cfg.back,backLabel:cfg.backLabel||'Chọn bài khác',bestKey:cfg.key?cfg.key+'-'+S.unit:null});
-    else show();
+    } else show();
   }
   show();
 }

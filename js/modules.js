@@ -95,7 +95,8 @@ function rainPlay(root){
     if(d.boss)bossOut=false;
     hitList.push(d.w);
     const wi=weak.findIndex(x=>x.h===d.w.h); if(wi>=0&&Math.random()<.6)weak.splice(wi,1);
-    S.box[d.w.h]=Math.max(box(d.w),Math.min(3,box(d.w)+1));
+    /* chỉ ghi số liệu luyện tập, không nâng mức nhớ SRS */
+    if(A.track)try{A.track({key:'mua'},{word:d.w},0,true)}catch(e){}
     if(!audio)speak(d.w.h);
     if(levelHits>=10)levelUp();
     hud();
@@ -104,7 +105,9 @@ function rainPlay(root){
   function miss(d){
     remove(d); lives--; combo=0; if(d.boss)bossOut=false;
     if(!weak.some(x=>x.h===d.w.h))weak.push(d.w); missed.push(d.w);
-    S.box[d.w.h]=0; if(A.srs)A.srs.flag(d.w.h);
+    /* bỏ lỡ một từ đã học: đưa vào hàng ôn, không hạ mức nhớ */
+    if(A.track)try{A.track({key:'mua'},{word:d.w},-1,false)}catch(e){}
+    if(A.srs)A.srs.flag(d.w.h);
     A.toast(`${d.w.h} · ${pyPlain(d.w.p)} · ${d.w.m}`);
     hud(); if(lives<=0)end();
   }
@@ -208,7 +211,18 @@ function writeView(root,pick){
    ================================================================= */
 const P=window.PINYIN;
 A.register('pinyin',root=>{pinyinView(root,S.pyTab||'tone')});
+/* khung trạng thái + bài kiểm tra + "đã biết, bỏ qua" cho một phần Pinyin (trạng thái tính ở js/dashboard.js · pyState) */
+const PY_COUNT={tone:10,ini:12,fin:12,ghep:10,pair:10};
+function pyBox(k,label){
+  const D=A.dash, s=D.pyState(k), b=D.pyBest(k), n=PY_COUNT[k], need=Math.ceil(n*D.PY_PASS/100);
+  const skipBtn=s==='passed'?'':S.track==='pinyin'?`<span class="meta">Bạn đã chọn "đã biết pinyin" ở trang chủ.</span>`
+    :`<button class="btn sm" type="button" data-pyskip="${k}">${s==='skipped'?'Bỏ chọn "đã biết" để luyện lại':'Tôi đã biết phần này – Bỏ qua'}</button>`;
+  return `<div class="pystat st-${s}"><div class="pyst-txt"><b>${label}</b> <span class="pyst-pill">${D.PY_STATE_TEXT[s]}</span>${b!=null?` <span class="meta">· tốt nhất ${b}%</span>`:''}
+    <small>Bài kiểm tra ${n} câu, cần đúng từ ${D.PY_PASS}% (${need}/${n} câu) mới tính là hoàn thành. Chỉ mở xem chưa được tính.</small></div>
+    <div class="row l"><button class="btn ${s==='passed'?'':'primary'} sm" type="button" data-pyq="${k}">${s==='passed'?'Làm lại bài kiểm tra':'Làm bài kiểm tra'}</button>${skipBtn}</div></div>`;
+}
 function pinyinView(root,tab){
+  /* S.pyDone chỉ ghi nhận "đã mở xem"; hoàn thành tính theo bài kiểm tra (js/dashboard.js · pyState) */
   A.cleanup(); S.pyTab=tab; if(tab!=='prac'){if(!S.pyDone||typeof S.pyDone!=='object')S.pyDone={};S.pyDone[tab]=1} save();
   root.innerHTML=`<h2 class="sect">Lộ trình Pinyin</h2>
   <p class="lead">Pinyin là cách ghi âm tiếng Trung bằng chữ Latin, gồm thanh mẫu (phụ âm đầu), vận mẫu (vần) và thanh điệu. Học theo thứ tự từ trái sang phải, chạm vào ô nào để nghe ví dụ.</p>
@@ -218,7 +232,7 @@ function pinyinView(root,tab){
   $('#ptabs').onclick=e=>{const b=e.target.closest('.tab');if(b)pinyinView(root,b.dataset.t)}; A.bindPicker();
   const M=$('#pmain'); A.setMain(M);
   if(tab==='tone'){
-    M.innerHTML=`<div class="tgrid">${P.tones.map(t=>`<div class="tcard"><span class="tm t${t.t}">${t.mark}</span><b>${t.name} <span class="meta">${t.shape}</span></b><p>${t.tip}</p>
+    M.innerHTML=`${pyBox('tone','Thanh điệu')}<p class="note" style="margin:0 0 14px">Mô tả bằng chữ và so sánh với tiếng Việt chỉ là <b>gần đúng</b>, không có âm nào giống hoàn toàn. Cách chắc nhất là bấm nghe ghi âm mẫu và bắt chước, chú ý vị trí lưỡi, khẩu hình môi và có bật hơi hay không.</p><div class="tgrid">${P.tones.map(t=>`<div class="tcard"><span class="tm t${t.t}">${t.mark}</span><b>${t.name} <span class="meta">${t.shape}</span></b><p>${t.tip}</p>
       <div class="exs">${t.ex.map(e=>`<button class="btn sm" data-h="${e[0]}" data-p="${e[1]}"><span class="hz">${e[0]}</span> ${e[1]}</button>`).join('')}</div></div>`).join('')}</div>
       <div class="sec"><h3>Nghe 4 thanh trên cùng một âm</h3><div class="slist">${P.sets.map(s=>`<div class="srow" style="grid-template-columns:repeat(4,minmax(0,1fr))">${s.map(([h,p])=>`<button class="btn sm" data-h="${h}" data-p="${p}"><span class="hz">${h}</span> <span class="t${toneOf(p)}" style="font-weight:700">${p}</span></button>`).join('')}</div>`).join('')}</div></div>
       <div class="sec"><h3>Quy tắc biến điệu</h3><div class="gp"><ul>
@@ -229,34 +243,58 @@ function pinyinView(root,tab){
       <div class="row l" style="margin-top:12px"><button class="btn sm" data-gospm="tone" type="button">Luyện nói 4 thanh</button><button class="btn sm" data-gospm="sandhi" type="button">Luyện nói biến điệu (thanh 3, 不, 一)</button></div>`;
   } else if(tab==='ini'||tab==='fin'){
     const groups=tab==='ini'?P.initials:P.finals;
-    M.innerHTML=groups.map(g=>`<div class="pygroup"><h3>${g.g}</h3><div class="pygrid">${g.items.map(([l,h,p,tip])=>`<button class="pycell" data-h="${h}" data-p="${p}"><b>${l}</b><span class="ex"><span class="hz">${h}</span> ${p}</span><small>${tip}</small></button>`).join('')}</div></div>`).join('')
+    M.innerHTML=pyBox(tab,tab==='ini'?'Thanh mẫu':'Vận mẫu')+`<p class="note" style="margin:0 0 14px">Mô tả bằng chữ và so sánh với tiếng Việt chỉ là <b>gần đúng</b>, không có âm nào giống hoàn toàn. Cách chắc nhất là bấm nghe ghi âm mẫu và bắt chước, chú ý vị trí lưỡi, khẩu hình môi và có bật hơi hay không.</p>`+groups.map(g=>`<div class="pygroup"><h3>${g.g}</h3><div class="pygrid">${g.items.map(([l,h,p,tip])=>`<button class="pycell" data-h="${h}" data-p="${p}"><b>${l}</b><span class="ex"><span class="hz">${h}</span> ${p}</span><small>${tip}</small></button>`).join('')}</div></div>`).join('')
       +(tab==='fin'?`<div class="gp"><p><b>Lưu ý cách viết:</b> i, u, ü đứng đầu âm tiết viết thành yi, wu, yu. Sau j, q, x thì ü viết thành u (ju, qu, xu) nhưng vẫn đọc là ü. Khi gõ phím, ü thay bằng v.</p></div>`:'');
   } else {
     A.menu(M,[
       {k:'ptone',hz:'声调',name:'Nghe đoán thanh điệu',d:'Nghe một âm và chọn đúng thanh 1, 2, 3 hay 4.',run:pTone},
       {k:'ppair',hz:'辨音',name:'Phân biệt âm dễ nhầm',d:'zh/z, ch/c, sh/s, j/q, b/p… nghe và chọn đúng pinyin.',run:pPair},
-      {k:'pword',hz:'拼读',name:'Nghe chọn pinyin',d:'Nghe chữ HSK 1 và chọn cách ghi pinyin đúng trong 4 đáp án.',run:pWord}
+      {k:'pword',hz:'拼读',name:'Nghe chọn pinyin',d:'Nghe chữ HSK 1 và chọn cách ghi pinyin đúng trong 4 đáp án.',run:pWord},
+      {k:'pini',hz:'声母',name:'Kiểm tra thanh mẫu',d:'Nghe một âm và chọn đúng phụ âm đầu, 12 câu.',run:pIni},
+      {k:'pfin',hz:'韵母',name:'Kiểm tra vận mẫu',d:'Nghe một âm và chọn đúng vần, 12 câu.',run:pFin}
     ]);
-    M.insertAdjacentHTML('beforeend',`<div class="row l" style="margin-top:14px"><button class="btn sm" data-gospm="pair" type="button">Luyện nói cặp âm dễ nhầm</button><button class="btn sm" data-gospm="tone" type="button">Luyện nói 4 thanh</button></div>`);
+    M.insertAdjacentHTML('beforeend',`<div class="pystats">${pyBox('ghep','Ghép âm: nghe chọn pinyin')}${pyBox('pair','Phân biệt cặp âm dễ nhầm')}</div><div class="row l" style="margin-top:14px"><button class="btn sm" data-gospm="pair" type="button">Luyện nói cặp âm dễ nhầm</button><button class="btn sm" data-gospm="tone" type="button">Luyện nói 4 thanh</button></div>`);
   }
   $$('[data-gospm]',M).forEach(b=>b.onclick=()=>{S.spMode=b.dataset.gospm;save();location.hash='noi'});
   /* phần Pinyin phát ghi âm người thật (js/pinyin-audio.js); không có file thì tự quay về giọng trình duyệt */
   $$('[data-h]',M).forEach(b=>b.onclick=()=>b.dataset.p?A.playSyllable(b.dataset.p,b,{h:b.dataset.h}):speak(b.dataset.h,false,b));
   const back=()=>pinyinView(root,'prac');
-  if(tab==='prac'&&A.takeAutorun){const ar=A.takeAutorun('pinyin');if(ar){const f={ptone:pTone,ppair:pPair,pword:pWord}[ar];if(f)return f()}}
+  const QUIZ={tone:()=>pTone(),ini:()=>pIni(),fin:()=>pFin(),ghep:()=>pWord(),pair:()=>pPair()};
+  $$('[data-pyq]',M).forEach(b=>b.onclick=()=>QUIZ[b.dataset.pyq]());
+  $$('[data-pyskip]',M).forEach(b=>b.onclick=()=>{const k=b.dataset.pyskip,on=A.dash.pyState(k)!=='skipped';A.dash.pySkip(k,on);
+    A.toast(on?'Đã đánh dấu "đã biết, bỏ qua". Bạn vẫn có thể làm bài kiểm tra bất cứ lúc nào.':'Đã bỏ chọn, phần này cần làm bài kiểm tra.');pinyinView(root,tab)});
+  /* ghi kết quả bài kiểm tra: chỉ đạt khi làm đủ số câu và đúng từ 80% (js/dashboard.js · pyRecord) */
+  const done=k=>r=>{const res=A.dash.pyRecord(k,r); if(!res)return;
+    setTimeout(()=>{const box=document.querySelector('.result'); if(box)box.insertAdjacentHTML('afterbegin',`<p class="note ${res.passed?'':'warn'}" style="margin-bottom:12px">${res.passed?`Đúng ${res.pct}%: phần này đã <b>hoàn thành</b>.`:`Đúng ${res.pct}%. Cần từ ${A.dash.PY_PASS}% để hoàn thành, hãy làm lại.`}</p>`)},0)};
+  if(tab==='prac'&&A.takeAutorun){const ar=A.takeAutorun('pinyin');if(ar){const f={ptone:pTone,ppair:pPair,pword:pWord,pini:pIni,pfin:pFin}[ar];if(f)return f()}}
+  /* bài kiểm tra thanh mẫu / vận mẫu: nghe âm mẫu (ghi âm người thật), chọn đúng thanh mẫu hoặc vận mẫu; đáp án nhiễu ưu tiên cùng nhóm */
+  function soundQuiz(kind){
+    const groups=kind==='ini'?P.initials:P.finals;
+    const items=groups.flatMap(g=>g.items.map(([l,h,p,tip])=>({g:g.g,l,h,p,tip})));
+    const AMB={o:'uo',uo:'o'};                      /* 哦 ó và 我 wǒ nghe gần nhau khi đứng riêng: không đặt cạnh nhau */
+    const rounds=sample(items,PY_COUNT[kind]).map(it=>{
+      const pool=[...shuffle(items.filter(x=>x.g===it.g)),...shuffle(items.filter(x=>x.g!==it.g))].filter(x=>x.l!==it.l&&AMB[it.l]!==x.l);
+      const opts=shuffle([it,...pool.slice(0,3)]);
+      return {prompt:`<div class="q">${kind==='ini'?'Âm này bắt đầu bằng thanh mẫu nào?':'Âm này có vận mẫu nào?'}</div>${A.listenBtns()}`,
+        options:opts.map(x=>({ok:x.l===it.l,html:`<b class="py" style="font-size:24px">${x.l}</b>`})),
+        onShow:()=>A.bindListenPy(it.h,it.p), reveal:`<span class="hz" style="font-weight:700">${it.h}</span> ${it.p} · ${kind==='ini'?'thanh mẫu':'vận mẫu'} <b>${it.l}</b>`}});
+    return rounds;
+  }
+  function pIni(){A.runMC({key:'pini',title:'Kiểm tra thanh mẫu',rounds:soundQuiz('ini'),replay:pIni,back,onFinish:done('ini')})}
+  function pFin(){A.runMC({key:'pfin',title:'Kiểm tra vận mẫu',rounds:soundQuiz('fin'),replay:pFin,back,onFinish:done('fin')})}
   function pTone(){
     const rounds=Array.from({length:10},()=>{const set=P.sets[rand(P.sets.length)], k=rand(4), [h,p]=set[k];
       return {prompt:`<div class="q">Âm này mang thanh mấy?</div>${A.listenBtns()}`, cols:'tonebtns',
         options:set.map(([hh,pp],j)=>({ok:j===k,tone:j+1,html:`<b class="t${j+1}">${pp}</b><small>Thanh ${j+1}</small>`})),
         onShow:()=>A.bindListenPy(h,p), reveal:`<span class="hz" style="font-weight:700">${h}</span> ${p}`}});
-    A.runMC({key:'ptone',title:'Nghe đoán thanh điệu',rounds,replay:pTone,back});
+    A.runMC({key:'ptone',title:'Nghe đoán thanh điệu',rounds,replay:pTone,back,onFinish:done('tone')});
   }
   function pPair(){
     const rounds=sample(P.contrasts,10).map(pair=>{const k=rand(2),[h,p]=pair[k];
       return {pair:pair.map(x=>x[1]).join(' / '),prompt:`<div class="q">Bạn nghe thấy âm nào?</div>${A.listenBtns()}`,
         options:pair.map(([hh,pp],j)=>({ok:j===k,html:`<b class="py" style="font-size:24px">${pp}</b>`})),
         onShow:()=>A.bindListenPy(h,p), reveal:`<span class="hz" style="font-weight:700">${h}</span> ${p} · cặp: ${pair.map(x=>x[1]).join(' / ')}`}});
-    A.runMC({key:'ppair',title:'Phân biệt âm dễ nhầm',rounds,replay:pPair,back});
+    A.runMC({key:'ppair',title:'Phân biệt âm dễ nhầm',rounds,replay:pPair,back,onFinish:done('pair')});
   }
   function pWord(){
     const singles=ALLWORDS.filter(w=>[...w.h].length===1&&!w.p.includes(' ')&&toneOf(w.p));
@@ -269,7 +307,7 @@ function pinyinView(root,tab){
         options:opts.map(p=>({ok:p===w.p,p,html:pyHTML(p)})), onShow:()=>A.bindListenPy(w.h,w.p),
         reveal:`<span class="hz" style="font-weight:700">${w.h}</span> ${w.p} · ${esc(w.m)}`};
     });
-    A.runMC({key:'pword',title:'Nghe chọn pinyin',rounds,replay:pWord,back});
+    A.runMC({key:'pword',title:'Nghe chọn pinyin',rounds,replay:pWord,back,onFinish:done('ghep')});
   }
 }
 

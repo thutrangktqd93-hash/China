@@ -28,7 +28,7 @@ function renderUnits(){
     <span class="v">${u.words.length} từ<span class="mini"><i style="width:${mastery(u)}%"></i></span></span></button>`).join('');
   const u=unit(), pct=mastery(u);
   $('#lhead').innerHTML=`<div><div class="lnum">Bài ${u.n} / ${UNITS.length}</div><h1><span class="hz">${u.hz}</span>${esc(u.t)}</h1></div>
-    <div class="meta">${u.words.length} từ · ${u.sents.length} câu mẫu · đã thuộc ${pct}%</div><div class="pbar"><i style="width:${pct}%"></i></div>`;
+    <div class="meta">${u.words.length} từ · ${u.sents.length} câu mẫu · mức nhớ ${pct}%</div><div class="pbar"><i style="width:${pct}%"></i></div>`;
   $('#prev').checked=S.prev; $('#prev').disabled=S.unit===1;
   A.renderStats();
 }

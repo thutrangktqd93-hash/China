@@ -14,6 +14,8 @@ function track(cfg,r,k,ok){
   /* tỷ lệ sai theo bài */
   const U=(r.word&&r.word.U)||(r.sent&&r.sent.U)||(key&&['ptone','ppair','pword','rad','gq','mq'].includes(key)?0:S.unit);
   if(U){bump(`u:${U}:a`);if(!ok)bump(`u:${U}:w`)}
+  /* số liệu luyện tập theo từng từ (đã luyện bao nhiêu lần, sai bao nhiêu): tách riêng khỏi mức nhớ SRS */
+  if(r.word&&r.word.h){bump(`wa:${r.word.h}`);if(!ok)bump(`ww:${r.word.h}`)}
   /* thanh điệu: so từng âm tiết giữa đáp án đúng và đáp án đã chọn */
   if(key==='ptone'&&r.options){
     const right=r.options.find(o=>o.ok); if(right&&right.tone){bump(`ta:${right.tone}`); if(!ok&&k>=0&&r.options[k].tone){bump(`tw:${right.tone}`);bump(`tc:${right.tone}>${r.options[k].tone}`)}}
@@ -67,24 +69,71 @@ function unitSteps(n){
   return steps;
 }
 const unitDone=n=>unitSteps(n).every(s=>s.done);
+/* ---------- trạng thái từng phần Pinyin ----------
+   Mỗi phần có một bài kiểm tra; chỉ HOÀN THÀNH khi một lần làm đủ số câu đạt từ 80% (PY_PASS).
+   Trạng thái: 'new' chưa học · 'seen' đã xem nội dung · 'practice' đang luyện (đã làm bài, chưa đạt)
+               · 'passed' hoàn thành · 'skipped' chủ động bỏ qua (khác với hoàn thành).
+   Lưu trong các trường sẵn có (đồng bộ an toàn, gộp theo giá trị lớn nhất):
+     S.done['pypass-<k>']=1 đã đạt · S.done['pytry-<k>'] số lần làm · S.best['pyq-<k>'] phần trăm cao nhất
+     S.skipSteps['py-<k>']=1 bỏ qua · S.pyDone[tab]=1 đã mở xem (chỉ để biết "đã xem", không còn tính là xong). */
+const PY_PASS=80;
+const PY_QUIZ={tone:'ptone',ini:'pini',fin:'pfin',ghep:'pword',pair:'ppair'};
+const PY_SEEN={tone:'tone',ini:'ini',fin:'fin'};
+function pyState(k){
+  const d=S.done||{}, b=S.best||{};
+  if(d[`pypass-${k}`]>0)return 'passed';
+  if((S.skipSteps||{})[`py-${k}`]||S.track==='pinyin')return 'skipped';
+  if(d[`pytry-${k}`]>0)return 'practice';
+  if(PY_SEEN[k]&&(S.pyDone||{})[PY_SEEN[k]])return 'seen';
+  return 'new';
+}
+const PY_STATE_TEXT={new:'Chưa học',seen:'Đã xem nội dung',practice:'Đang luyện',passed:'Hoàn thành',skipped:'Đã bỏ qua'};
+function pyBest(k){const v=(S.best||{})[`pyq-${k}`];return v==null?null:+v}
+/* ghi kết quả một lần làm bài kiểm tra Pinyin (gọi từ runMC.onFinish trong js/modules.js) */
+function pyRecord(k,{correct,total,count}){
+  if(!PY_QUIZ[k]||!count)return null;
+  if(!S.done||typeof S.done!=='object')S.done={};
+  if(!S.best||typeof S.best!=='object')S.best={};
+  const pct=Math.round(correct/count*100);
+  S.done[`pytry-${k}`]=(S.done[`pytry-${k}`]||0)+1;
+  S.best[`pyq-${k}`]=Math.max(+(S.best[`pyq-${k}`]||0),pct);
+  const passed=total>=count&&pct>=PY_PASS;
+  if(passed)S.done[`pypass-${k}`]=1;
+  save();
+  return {pct,passed};
+}
+function pySkip(k,on){
+  S.skipSteps=Object.assign({},S.skipSteps); const id=`py-${k}`;
+  if(on)S.skipSteps[id]=1; else delete S.skipSteps[id];
+  save();
+}
 function pinyinSteps(){
-  const v=S.pyDone||{}, acc=(a,w)=>{const x=st(a);return {n:x,ok:x>=10&&(x-st(w))/x>=0.7,pct:x?Math.round((x-st(w))/x*100):0}};
-  const ta=[1,2,3,4].reduce((s,t)=>s+st(`ta:${t}`),0), tw=[1,2,3,4].reduce((s,t)=>s+st(`tw:${t}`),0);
-  const toneOk=ta>=10&&(ta-tw)/ta>=0.7;
-  let pa=0,pw=0; for(const [k,x] of Object.entries(S.stats||{})){if(k.startsWith('pa:'))pa+=x;if(k.startsWith('pw:'))pw+=x}
-  const pairOk=pa>=10&&(pa-pw)/pa>=0.7;
-  const wordAcc=(S.done||{}); const pwordDone=Object.keys(wordAcc).some(k=>k.startsWith('pword-'));
+  const det=(k,base)=>{const s=pyState(k),b=pyBest(k);
+    return s==='passed'?`Hoàn thành${b!=null?` · tốt nhất ${b}%`:''}`:s==='skipped'?'Đã bỏ qua · có thể quay lại luyện bất cứ lúc nào'
+      :s==='practice'?`Đang luyện · tốt nhất ${b??0}%, cần ${PY_PASS}%`:s==='seen'?`Đã xem · làm bài kiểm tra, cần đúng ${PY_PASS}%`:base};
   const steps=[
-    {k:'tone',t:'Nhận biết 4 thanh điệu',detail:v.tone?(ta?`Đúng ${Math.round((ta-tw)/ta*100)}% trên ${ta} lượt nghe thanh`:'Đã xem, hãy làm bài nghe đoán thanh'):'Nghe mẫu 4 thanh và quy tắc biến điệu',done:!!v.tone&&toneOk,
-      route:'pinyin',prep:()=>{S.pyTab=v.tone?'prac':'tone'},auto:v.tone?['pinyin','ptone']:null},
-    {k:'ini',t:'Học thanh mẫu',detail:'23 phụ âm đầu, có âm thanh mẫu',done:!!v.ini,route:'pinyin',prep:()=>{S.pyTab='ini'}},
-    {k:'fin',t:'Học vận mẫu',detail:'36 vần, quy tắc viết yi, wu, yu',done:!!v.fin,route:'pinyin',prep:()=>{S.pyTab='fin'}},
-    {k:'ghep',t:'Ghép âm: nghe chọn pinyin',detail:'Nghe chữ rồi chọn cách ghi pinyin đúng',done:pwordDone,route:'pinyin',prep:()=>{S.pyTab='prac'},auto:['pinyin','pword']},
-    {k:'pair',t:'Phân biệt cặp âm dễ nhầm',detail:pa?`Đúng ${Math.round((pa-pw)/pa*100)}% trên ${pa} lượt`:'zh/z, ch/c, sh/s, j/q…',done:pairOk,route:'pinyin',prep:()=>{S.pyTab='prac'},auto:['pinyin','ppair']},
+    {k:'tone',t:'Nhận biết 4 thanh điệu',detail:det('tone','Nghe mẫu 4 thanh rồi làm bài nghe đoán thanh'),route:'pinyin',prep:()=>{S.pyTab=pyState('tone')==='new'?'tone':'prac'},auto:pyState('tone')==='new'?null:['pinyin','ptone']},
+    {k:'ini',t:'Học thanh mẫu',detail:det('ini','23 phụ âm đầu, có âm thanh mẫu, bài kiểm tra 12 câu'),route:'pinyin',prep:()=>{S.pyTab='ini'}},
+    {k:'fin',t:'Học vận mẫu',detail:det('fin','36 vần, quy tắc viết yi, wu, yu, bài kiểm tra 12 câu'),route:'pinyin',prep:()=>{S.pyTab='fin'}},
+    {k:'ghep',t:'Ghép âm: nghe chọn pinyin',detail:det('ghep','Nghe chữ rồi chọn cách ghi pinyin đúng'),route:'pinyin',prep:()=>{S.pyTab='prac'},auto:['pinyin','pword']},
+    {k:'pair',t:'Phân biệt cặp âm dễ nhầm',detail:det('pair','zh/z, ch/c, sh/s, j/q…'),route:'pinyin',prep:()=>{S.pyTab='prac'},auto:['pinyin','ppair']},
   ];
-  const skip=S.skipSteps||{};
-  steps.forEach(s=>{s.id=`py-${s.k}`;if(skip[s.id])s.done=true,s.skipped=true});
+  steps.forEach(s=>{s.id=`py-${s.k}`;s.state=pyState(s.k);s.done=s.state==='passed'||s.state==='skipped';s.skipped=s.state==='skipped'});
   return steps;
+}
+/* chuyển dữ liệu cũ (chạy một lần): trước đây mở tab là tính xong, thanh điệu và cặp âm tính theo tổng số lượt (≥10 lượt, đúng ≥70%).
+   Không xóa gì. Chỉ công nhận "hoàn thành" cho thanh điệu / cặp âm nếu tổng số lượt ≥ 10 và đúng ≥ 80% (cùng ngưỡng mới);
+   các phần khác giữ trạng thái "đã xem" hoặc "đang luyện" để người học làm bài kiểm tra. */
+if(!S.pyMig){
+  if(!S.done||typeof S.done!=='object')S.done={};
+  const ta=[1,2,3,4].reduce((s,t)=>s+st(`ta:${t}`),0), tw=[1,2,3,4].reduce((s,t)=>s+st(`tw:${t}`),0);
+  let pa=0,pw=0; for(const [k,x] of Object.entries(S.stats||{})){if(k.startsWith('pa:'))pa+=x;if(k.startsWith('pw:'))pw+=x}
+  if(ta>=10&&(ta-tw)/ta>=PY_PASS/100)S.done['pypass-tone']=1;
+  if(pa>=10&&(pa-pw)/pa>=PY_PASS/100)S.done['pypass-pair']=1;
+  if(ta>0&&!S.done['pytry-tone'])S.done['pytry-tone']=1;
+  if(pa>0&&!S.done['pytry-pair'])S.done['pytry-pair']=1;
+  if(Object.keys(S.done).some(k=>k.startsWith('pword-'))&&!S.done['pytry-ghep'])S.done['pytry-ghep']=1;
+  S.pyMig=1; save();
 }
 const pinyinDone=()=>S.track==='pinyin'||pinyinSteps().every(s=>s.done);
 
@@ -211,7 +260,7 @@ function pathBlock(){
   /* điểm quy về thang 100 (đề mô phỏng HSK chấm trên 200) */
   const ex=(S.exams||[]), best=ex.length?Math.max(...ex.map(e=>Math.round(e.s*100/(e.max||100)))):null;
   const stages=[
-    {n:1,t:'Phát âm và pinyin',d:S.track==='pinyin'?'Bạn đã chọn bỏ qua (đã biết pinyin)':`${pyN}/${py.length} bước`,p:S.track==='pinyin'?100:pyN/py.length*100,go:'pinyin'},
+    {n:1,t:'Phát âm và pinyin',d:S.track==='pinyin'?'Bạn đã chọn bỏ qua (đã biết pinyin)':`${py.filter(s=>s.state==='passed').length} hoàn thành${py.some(s=>s.skipped)?` · ${py.filter(s=>s.skipped).length} đã bỏ qua`:''} / ${py.length} phần`,p:S.track==='pinyin'?100:pyN/py.length*100,go:'pinyin'},
     {n:2,t:'Từ vựng cơ bản',d:`${o.intro}/${o.total} từ đã học · ${o.mastered} nhớ dài hạn`,p:o.intro/o.total*100,go:'flash'},
     {n:3,t:'Ghép từ thành câu',d:`${cnt('lorder')}/${UNITS.length} bài đã xếp câu`,p:cnt('lorder')/UNITS.length*100,go:'order'},
     {n:4,t:'Ngữ pháp nền tảng',d:gram?`${gram} lượt bài tập ngữ pháp, lượng từ`:'Chưa làm bài tập',p:Math.min(100,gram/10*100),go:'nguphap'},
@@ -267,5 +316,5 @@ function bind(root){
 /* lần đầu: coi các bài đã có điểm (S.best) là đã hoàn thành, để không gợi ý lại */
 if(!S.done||typeof S.done!=='object'){S.done={};for(const [k,v] of Object.entries(S.best||{}))if(v>0)S.done[k]=1;save()}
 
-A.dash={ctaBlock,todayBlock,overviewBlock,pathBlock,weakBlock,bind,nextStep,today,overview,unitSteps,pinyinSteps,unitDone,track};
+A.dash={ctaBlock,todayBlock,overviewBlock,pathBlock,weakBlock,bind,nextStep,today,overview,unitSteps,pinyinSteps,unitDone,track,pyState,pyRecord,pySkip,pyBest,PY_PASS,PY_STATE_TEXT};
 })();

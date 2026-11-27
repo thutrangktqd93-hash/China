@@ -759,3 +759,14 @@ select{font:inherit;color:var(--ink);background:var(--surface);border:1px solid 
 .gunit:hover{text-decoration:underline}
 .glink{margin:14px 0 0;font-size:14px;color:var(--muted)}
 .glink .linkbtn{background:none;border:0;padding:0;color:var(--jade);font-weight:600;text-decoration:underline;text-underline-offset:3px}
+
+/* ---------- Trạng thái từng phần Pinyin (chưa học / đã xem / đang luyện / hoàn thành / đã bỏ qua) ---------- */
+.pystat{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 16px;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--line);border-radius:12px;padding:12px 14px;margin:0 0 16px}
+.pystat .pyst-txt{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1 1 280px}
+.pystat .pyst-txt small{color:var(--muted);font-size:12.5px}
+.pyst-pill{display:inline-block;font-size:12px;font-weight:700;border-radius:99px;padding:1px 9px;background:var(--paper);color:var(--muted);border:1px solid var(--line)}
+.pystat.st-passed{border-left-color:var(--ok)} .pystat.st-passed .pyst-pill{background:var(--ok-soft);color:var(--ok);border-color:var(--ok)}
+.pystat.st-practice{border-left-color:var(--gold)} .pystat.st-practice .pyst-pill{background:var(--gold-soft);color:var(--gold);border-color:var(--gold)}
+.pystat.st-skipped{border-left-color:var(--mint)} .pystat.st-skipped .pyst-pill{background:var(--mint-soft);color:#3c7f70;border-color:var(--mint)}
+.pystat.st-seen{border-left-color:var(--jade-soft)}
+.pystats{margin-top:16px}
