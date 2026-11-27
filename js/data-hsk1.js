@@ -1,4 +1,6 @@
 /* HSK 3.0 cấp 1 — 506 từ (theo danh sách chuẩn GF0025-2021), chia 22 bài theo chủ đề.
+   Các hư từ cốt lõi (是 不 吗 呢 很 也 好 的 · 这 那 什么 哪儿 有 没有 了 · 在 和 吧 太 都 怎么) được đặt ở bài 1–3
+   để câu mẫu của mọi bài chỉ dùng từ của bài đó và các bài trước (kiểm tra: python3 tools/kiem-tra-cau-mau.py).
    Mỗi dòng từ: chữ|pinyin (cách âm tiết bằng dấu cách)|nghĩa tiếng Việt
    Mỗi dòng câu: các từ cách nhau bằng dấu cách|pinyin|nghĩa */
 window.HSK1_RAW = [
@@ -24,9 +26,17 @@ window.HSK1_RAW = [
 请进|qǐng jìn|mời vào
 请坐|qǐng zuò|mời ngồi
 没什么|méi shén me|không có gì
-没事儿|méi shìr|không sao đâu`,`
+没事儿|méi shìr|không sao đâu
+是|shì|là
+不|bù|không
+吗|ma|không? (trợ từ hỏi)
+呢|ne|còn…thì sao? (trợ từ)
+很|hěn|rất
+也|yě|cũng
+好|hǎo|tốt, hay
+的|de|của (trợ từ)`,`
 谢谢 你！|xièxie nǐ!|Cảm ơn bạn!
-对不起。 没关系。|duìbuqǐ. méi guānxi.|Xin lỗi. Không sao.
+对不起。 没关系。|duìbuqǐ. méiguānxi.|Xin lỗi. Không sao.
 请问， 他 是 谁？|qǐngwèn, tā shì shéi?|Xin hỏi, anh ấy là ai?`],
 
 ["Số đếm & lượng từ","一二三",`
@@ -55,10 +65,17 @@ window.HSK1_RAW = [
 口|kǒu|miệng; (lượng từ người trong nhà)
 块|kuài|miếng; đồng (tệ)
 次|cì|lần
-岁|suì|tuổi`,`
-我 家 有 四 口 人。|wǒ jiā yǒu sì kǒu rén.|Nhà tôi có bốn người.
-这 个 多少 钱？|zhège duōshao qián?|Cái này bao nhiêu tiền?
-我 去 了 两 次。|wǒ qù le liǎng cì.|Tôi đã đi hai lần.`],
+岁|suì|tuổi
+这|zhè|này, đây
+那|nà|kia, đó
+什么|shén me|cái gì
+哪儿|nǎr|ở đâu
+有|yǒu|có
+没有|méi yǒu|không có; chưa
+了|le|rồi (trợ từ)`,`
+你 几 岁？|nǐ jǐ suì?|Bạn mấy tuổi?
+这 个 多少 块？|zhè ge duōshao kuài?|Cái này bao nhiêu đồng?
+这 是 第 一 次。|zhè shì dì yī cì.|Đây là lần đầu tiên.`],
 
 ["Gia đình","爸妈",`
 爸|bà|bố
@@ -82,10 +99,16 @@ window.HSK1_RAW = [
 子|zǐ|con
 家人|jiā rén|người nhà
 小孩儿|xiǎo háir|trẻ con
-小朋友|xiǎo péng yǒu|bạn nhỏ, em bé`,`
+小朋友|xiǎo péng you|bạn nhỏ, em bé
+在|zài|ở; đang
+和|hé|và
+吧|ba|nhé, chứ (trợ từ)
+太|tài|quá
+都|dōu|đều
+怎么|zěn me|thế nào, sao`,`
 这 是 我 爸爸 和 妈妈。|zhè shì wǒ bàba hé māma.|Đây là bố và mẹ tôi.
 我 有 一 个 哥哥。|wǒ yǒu yí ge gēge.|Tôi có một anh trai.
-她 的 女儿 很 小。|tā de nǚ'ér hěn xiǎo.|Con gái cô ấy còn rất nhỏ.`],
+她 的 女儿 两 岁。|tā de nǚ'ér liǎng suì.|Con gái cô ấy hai tuổi.`],
 
 ["Con người & nghề nghiệp","人",`
 人|rén|người
@@ -107,7 +130,7 @@ window.HSK1_RAW = [
 医生|yī shēng|bác sĩ
 工人|gōng rén|công nhân
 先生|xiān sheng|ông, ngài; chồng
-小姐|xiǎo jie|cô
+小姐|xiǎo jie|cô (nên dùng cẩn thận khi gọi người lạ)
 病人|bìng rén|bệnh nhân
 网友|wǎng yǒu|bạn trên mạng
 别人|bié ren|người khác`,`
@@ -139,8 +162,8 @@ window.HSK1_RAW = [
 半天|bàn tiān|nửa ngày; mãi
 一会儿|yí huìr|một lát`,`
 现在 几 点？|xiànzài jǐ diǎn?|Bây giờ mấy giờ?
-我 明天 上午 上课。|wǒ míngtiān shàngwǔ shàngkè.|Sáng mai tôi đi học.
-请 等 一会儿。|qǐng děng yíhuìr.|Xin đợi một lát.`],
+我 明天 上午 有 时间。|wǒ míngtiān shàngwǔ yǒu shíjiān.|Sáng mai tôi rảnh.
+现在 是 下午 两 点 半。|xiànzài shì xiàwǔ liǎng diǎn bàn.|Bây giờ là hai giờ rưỡi chiều.`],
 
 ["Năm, tháng, tuần","年月",`
 年|nián|năm
@@ -192,9 +215,9 @@ window.HSK1_RAW = [
 好吃|hǎo chī|ngon
 饿|è|đói
 渴|kě|khát`,`
-你 想 吃 什么？|nǐ xiǎng chī shénme?|Bạn muốn ăn gì?
-我 要 一 杯 茶。|wǒ yào yì bēi chá.|Tôi muốn một cốc trà.
-这 个 菜 很 好吃。|zhège cài hěn hǎochī.|Món này rất ngon.`],
+你 吃 什么？|nǐ chī shénme?|Bạn ăn gì?
+一 杯 茶， 谢谢。|yì bēi chá, xièxie.|Cho tôi một cốc trà, cảm ơn.
+这 个 菜 很 好吃。|zhè ge cài hěn hǎochī.|Món này rất ngon.`],
 
 ["Ở trường","学校",`
 学|xué|học
@@ -232,7 +255,7 @@ window.HSK1_RAW = [
 
 ["Ngôn ngữ & ghi nhớ","说写",`
 汉语|Hàn yǔ|tiếng Hán
-汉字|Hàn zì|chữ Hán
+汉字|hàn zì|chữ Hán
 中文|Zhōng wén|tiếng Trung
 外语|wài yǔ|ngoại ngữ
 字|zì|chữ
@@ -247,13 +270,13 @@ window.HSK1_RAW = [
 明白|míng bai|hiểu, rõ ràng
 记|jì|ghi, nhớ
 记得|jì de|nhớ
-记住|jì zhu|nhớ kỹ
+记住|jì zhù|nhớ kỹ
 忘|wàng|quên
 忘记|wàng jì|quên
 认真|rèn zhēn|chăm chỉ, nghiêm túc
 试|shì|thử`,`
-我 会 说 一点儿 汉语。|wǒ huì shuō yìdiǎnr Hànyǔ.|Tôi biết nói một chút tiếng Hán.
-这 个 字 怎么 写？|zhège zì zěnme xiě?|Chữ này viết thế nào?
+你 说 汉语 吗？|nǐ shuō Hànyǔ ma?|Bạn có nói tiếng Hán không?
+这 个 字 怎么 写？|zhè ge zì zěnme xiě?|Chữ này viết thế nào?
 我 明白 了。|wǒ míngbai le.|Tôi hiểu rồi.`],
 
 ["Nhà cửa & đồ dùng","家",`
@@ -285,9 +308,9 @@ window.HSK1_RAW = [
 电脑|diàn nǎo|máy tính
 电视|diàn shì|ti vi
 电视机|diàn shì jī|máy ti vi`,`
-我 的 房间 很 干净。|wǒ de fángjiān hěn gānjìng.|Phòng của tôi rất sạch.
+我 的 房间 在 楼上。|wǒ de fángjiān zài lóushàng.|Phòng tôi ở trên lầu.
 洗手间 在 哪儿？|xǐshǒujiān zài nǎr?|Nhà vệ sinh ở đâu?
-我 给 妈妈 打电话。|wǒ gěi māma dǎ diànhuà.|Tôi gọi điện cho mẹ.`],
+妈妈 在 打电话。|māma zài dǎ diànhuà.|Mẹ đang gọi điện thoại.`],
 
 ["Phương hướng & vị trí","上下",`
 上|shàng|trên; lên
@@ -321,7 +344,7 @@ window.HSK1_RAW = [
 那边|nà bian|bên kia
 一边|yì biān|một bên; vừa…vừa`,`
 书 在 桌子 上边。|shū zài zhuōzi shàngbian.|Sách ở trên bàn.
-医院 在 学校 旁边。|yīyuàn zài xuéxiào pángbiān.|Bệnh viện ở cạnh trường học.
+我 家 在 学校 旁边。|wǒ jiā zài xuéxiào pángbiān.|Nhà tôi ở cạnh trường học.
 洗手间 在 左边。|xǐshǒujiān zài zuǒbian.|Nhà vệ sinh ở bên trái.`],
 
 ["Đi lại","去来",`
@@ -333,7 +356,7 @@ window.HSK1_RAW = [
 回到|huí dào|trở về
 回家|huí jiā|về nhà
 回来|huí lai|quay về
-回去|huí qu|trở lại
+回去|huí qu|về, quay về (nơi khác)
 走|zǒu|đi bộ; rời đi
 走路|zǒu lù|đi bộ
 跑|pǎo|chạy
@@ -370,7 +393,7 @@ window.HSK1_RAW = [
 门票|mén piào|vé vào cửa
 路|lù|đường
 马路|mǎ lù|đường phố
-路口|lù kǒu|ngã tư
+路口|lù kǒu|ngã tư, giao lộ
 路上|lù shang|trên đường
 远|yuǎn|xa
 地方|dì fang|nơi, chỗ
@@ -380,8 +403,8 @@ window.HSK1_RAW = [
 中国|Zhōng guó|Trung Quốc
 国|guó|nước, quốc gia
 国家|guó jiā|đất nước
-国外|guó wài|nước ngoài
-外国|wài guó|nước ngoài`,`
+国外|guó wài|ở nước ngoài
+外国|wài guó|nước ngoài (người, vật nước ngoài)`,`
 我 坐 飞机 去 北京。|wǒ zuò fēijī qù Běijīng.|Tôi đi máy bay đến Bắc Kinh.
 机场 很 远。|jīchǎng hěn yuǎn.|Sân bay rất xa.
 我们 在 路口 下车。|wǒmen zài lùkǒu xiàchē.|Chúng tôi xuống xe ở ngã tư.`],
@@ -409,7 +432,7 @@ window.HSK1_RAW = [
 找到|zhǎo dào|tìm thấy
 包|bāo|túi, gói`,`
 我 去 商店 买 东西。|wǒ qù shāngdiàn mǎi dōngxi.|Tôi đến cửa hàng mua đồ.
-这 件 衣服 太 贵 了。|zhè jiàn yīfu tài guì le.|Bộ quần áo này đắt quá.
+这 个 太 贵 了。|zhè ge tài guì le.|Cái này đắt quá.
 我 找到 我 的 钱包 了。|wǒ zhǎodào wǒ de qiánbāo le.|Tôi tìm thấy ví của tôi rồi.`],
 
 ["Sở thích & giải trí","玩",`
@@ -435,9 +458,9 @@ window.HSK1_RAW = [
 放假|fàng jià|nghỉ lễ
 睡|shuì|ngủ
 睡觉|shuì jiào|đi ngủ`,`
-我 喜欢 看 电影。|wǒ xǐhuan kàn diànyǐng.|Tôi thích xem phim.
+我 喜欢 唱歌。|wǒ xǐhuan chànggē.|Tôi thích hát.
 你 的 爱好 是 什么？|nǐ de àihào shì shénme?|Sở thích của bạn là gì?
-这 首 歌 很 好听。|zhè shǒu gē hěn hǎotīng.|Bài hát này rất hay.`],
+他 唱歌 很 好听。|tā chànggē hěn hǎotīng.|Anh ấy hát rất hay.`],
 
 ["Việc hằng ngày","做",`
 起|qǐ|dậy
@@ -462,9 +485,9 @@ window.HSK1_RAW = [
 等|děng|đợi
 动|dòng|động, cử động
 动作|dòng zuò|động tác`,`
-我 每 天 七 点 起床。|wǒ měi tiān qī diǎn qǐchuáng.|Mỗi ngày tôi dậy lúc bảy giờ.
+我 早上 七 点 起床。|wǒ zǎoshang qī diǎn qǐchuáng.|Buổi sáng tôi dậy lúc bảy giờ.
 你 在 干什么？|nǐ zài gàn shénme?|Bạn đang làm gì?
-请 帮 我 打开 门。|qǐng bāng wǒ dǎkāi mén.|Làm ơn mở cửa giúp tôi.`],
+请 帮 我 开 门。|qǐng bāng wǒ kāi mén.|Làm ơn mở cửa giúp tôi.`],
 
 ["Nhìn, nghe, nghĩ","看听",`
 看|kàn|xem, nhìn
@@ -489,14 +512,13 @@ window.HSK1_RAW = [
 能|néng|có thể
 要|yào|muốn; cần; sẽ`,`
 你 叫 什么 名字？|nǐ jiào shénme míngzi?|Bạn tên là gì?
-认识 你 很 高兴。|rènshi nǐ hěn gāoxìng.|Rất vui được quen bạn.
+你 认识 他 吗？|nǐ rènshi tā ma?|Bạn có quen anh ấy không?
 我 不 知道。|wǒ bù zhīdào.|Tôi không biết.`],
 
 ["Tính chất & đánh giá","大小",`
 大|dà|to, lớn
 小|xiǎo|nhỏ
 高|gāo|cao
-好|hǎo|tốt, hay
 坏|huài|xấu, hỏng
 新|xīn|mới
 老|lǎo|già, cũ
@@ -520,7 +542,7 @@ window.HSK1_RAW = [
 行|xíng|được, ổn
 重|zhòng|nặng`,`
 今天 很 冷。|jīntiān hěn lěng.|Hôm nay rất lạnh.
-你 说 得 对。|nǐ shuō de duì.|Bạn nói đúng.
+你 说 的 对。|nǐ shuō de duì.|Bạn nói đúng.
 汉语 不 太 难。|Hànyǔ bú tài nán.|Tiếng Hán không khó lắm.`],
 
 ["Sức khỏe, cảm xúc, thời tiết","天气",`
@@ -542,18 +564,12 @@ window.HSK1_RAW = [
 明天 会 下雨。|míngtiān huì xiàyǔ.|Ngày mai sẽ mưa.`],
 
 ["Phó từ thường dùng","很",`
-不|bù|không
 没|méi|không, chưa
-没有|méi yǒu|không có; chưa
 不大|bú dà|không lắm
 不用|bú yòng|không cần
-很|hěn|rất
-太|tài|quá
 非常|fēi cháng|vô cùng
 最|zuì|nhất
 最好|zuì hǎo|tốt nhất là
-都|dōu|đều
-也|yě|cũng
 还|hái|còn, vẫn
 还是|hái shi|hay là; vẫn
 还有|hái yǒu|còn có
@@ -577,38 +593,24 @@ window.HSK1_RAW = [
 我们 一起 去 吧。|wǒmen yìqǐ qù ba.|Chúng ta cùng đi nhé.`],
 
 ["Hỏi & chỉ định","什么",`
-什么|shén me|cái gì
 哪|nǎ|nào
-哪儿|nǎr|ở đâu
 哪里|nǎ lǐ|ở đâu
 哪些|nǎ xiē|những cái nào
-这|zhè|này, đây
 这儿|zhèr|ở đây
 这里|zhè lǐ|ở đây
 这些|zhè xiē|những cái này
-那|nà|kia, đó
 那儿|nàr|ở đó
-那里|nà li|ở đó
+那里|nà lǐ|ở đó
 那些|nà xiē|những cái kia
-怎么|zěn me|thế nào, sao
-是|shì|là
-是不是|shì bu shì|có phải không
-有|yǒu|có
-在|zài|ở; đang`,`
+是不是|shì bu shì|có phải không`,`
 这 是 什么？|zhè shì shénme?|Đây là cái gì?
 你 家 在 哪儿？|nǐ jiā zài nǎr?|Nhà bạn ở đâu?
 你 是 不 是 老师？|nǐ shì bu shì lǎoshī?|Bạn có phải là giáo viên không?`],
 
 ["Trợ từ & giới từ","的了",`
-吗|ma|không? (trợ từ hỏi)
-呢|ne|còn…thì sao? (trợ từ)
-吧|ba|nhé, chứ (trợ từ)
-了|le|rồi (trợ từ)
-的|de|của (trợ từ)
 地|de|một cách (trợ từ)
 着|zhe|đang (trợ từ tiếp diễn)
 过|guò|đã từng; đi qua
-和|hé|và
 跟|gēn|với, cùng
 从|cóng|từ
 比|bǐ|so với
